@@ -44,9 +44,9 @@ public class AnnotationCommandExample {
 
 
     @Command.Sub(name = "channel", description = "Some Subcommand", ephemeral = true)   // Command: /example channel
-    @Choice.Text(argument = "some_text", name = "Text Choice One", value = "text_one")
-    // Choice for argument "some_text"
+    @Choice.Text(argument = "some_text", name = "Text Choice One", value = "text_one")  // Choice for argument "some_text"
     @Choice.Text(argument = "some_text", name = "Text Choice Wwo", value = "text_two")
+    @Permissions.Owner                                                                  // Only the bot owner(s), specified in the Bot Config, can use this command
     public static void executeSubCommand(@NotNull CommandContext context,
 
                                          @Arguments.Channel(
