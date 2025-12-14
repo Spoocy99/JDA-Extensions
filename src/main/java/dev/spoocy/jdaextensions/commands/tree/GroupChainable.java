@@ -1,0 +1,14 @@
+package dev.spoocy.jdaextensions.commands.tree;
+
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * @author Spoocy99 | GitHub: Spoocy99
+ */
+
+public interface GroupChainable<T> {
+
+    T then(@NotNull SubCommandGroup group);
+
+
+}
