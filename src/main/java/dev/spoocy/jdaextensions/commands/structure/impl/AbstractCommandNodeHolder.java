@@ -56,6 +56,18 @@ public abstract class AbstractCommandNodeHolder implements CommandNodeHolder {
     }
 
     @Override
+    public boolean hasNode(@NotNull String name) {
+        return this.subCommands.containsKey(name);
+    }
+
+    @Override
+    public String[] getNodeNames() {
+        return this.subCommands
+                .keySet()
+                .toArray(String[]::new);
+    }
+
+    @Override
     public @NotNull CommandNode getNode(@NotNull String name) {
         return this.getSubCommandData(name);
     }
