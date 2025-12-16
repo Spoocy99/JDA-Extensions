@@ -3,19 +3,14 @@ package dev.spoocy.jdaextensions.core;
 import dev.spoocy.jdaextensions.commands.manager.CommandManager;
 import dev.spoocy.jdaextensions.event.AdvancedEventManager;
 import dev.spoocy.jdaextensions.event.EventWaiter;
-import dev.spoocy.jdaextensions.commands.manager.impl.DefaultCommandManager;
 import dev.spoocy.utils.common.collections.Collector;
 import dev.spoocy.utils.common.log.FactoryHolder;
 import dev.spoocy.utils.common.log.ILogger;
 import dev.spoocy.utils.common.log.LogLevel;
 import dev.spoocy.utils.common.text.FormatUtils;
 import dev.spoocy.utils.common.scheduler.Scheduler;
-import lombok.Getter;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.entities.ApplicationInfo;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
@@ -36,6 +31,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /**
  * @author Spoocy99 | GitHub: Spoocy99
@@ -45,9 +41,17 @@ public abstract class DiscordBot<S extends BotSettings> {
 
     private static final ILogger LOGGER = ILogger.forThisClass();
 
-    private final BotBuilder builder;
+    private static DiscordBot<?> INSTANCE;
+
+    public static DiscordBot<?> getInstance() {
+        return INSTANCE;
+    }
+
     private final S config;
     private final long startupTime;
+    private final int activityUpdateRate;
+    private final List<Supplier<? extends Activity>> activities;
+    private final List<Consumer<? super JDA>> shardActions;
     private final IEventManager eventManager;
     private final ShardManager shardManager;
     private ApplicationInfo applicationInfo;
@@ -59,9 +63,16 @@ public abstract class DiscordBot<S extends BotSettings> {
     private final ScheduledExecutorService scheduler = Scheduler.newScheduledThreadPool(1);
 
     public DiscordBot(@NotNull S config, @NotNull BotBuilder builder) {
-        this.builder = builder;
+        if (INSTANCE != null) {
+            throw new IllegalStateException("An instance of DiscordBot already exists!");
+        }
+        INSTANCE = this;
+
         this.config = config;
         this.startupTime = System.currentTimeMillis();
+        this.activityUpdateRate = builder.activityUpdateRate;
+        this.activities = List.copyOf(builder.activities);
+        this.shardActions = List.copyOf(builder.shardActions);
         this.eventManager = new AdvancedEventManager();
         this.eventWaiter = new EventWaiter(Scheduler.newScheduledThreadPool(1), true);
 
@@ -75,25 +86,25 @@ public abstract class DiscordBot<S extends BotSettings> {
                 + "\n\t" + builder.formatInstanceInfo()
         );
 
-        DefaultShardManagerBuilder shardManagerBuilder = DefaultShardManagerBuilder.createDefault(config.getToken(), builder.getIntents())
+        DefaultShardManagerBuilder shardManagerBuilder = DefaultShardManagerBuilder.createDefault(config.getToken(), builder.intents)
                 .setHttpClient(new OkHttpClient())
                 .setStatus(config.getOnlineStatus())
                 .setStatusProvider(v -> config.getOnlineStatus())
                 .setShardsTotal(config.getShards())
-                .setMemberCachePolicy(builder.getMemberCachePolicy())
-                .enableCache(builder.getCacheFlags())
+                .setMemberCachePolicy(builder.memberCachePolicy)
+                .enableCache(builder.cacheFlags)
                 .setEventManagerProvider(v -> eventManager);
 
-        initActivities(builder, shardManagerBuilder);
+        initActivities(shardManagerBuilder);
 
-        this.commandManager = builder.getCommandManager();
+        this.commandManager = builder.commandManager;
 
         shardManagerBuilder.addEventListeners(this, this.eventWaiter);
-        shardManagerBuilder.addEventListeners(builder.getListeners().toArray());
+        shardManagerBuilder.addEventListeners(builder.listeners.toArray());
 
-        builder.getBuilderActions().forEach(action -> action.accept(shardManagerBuilder));
+        builder.builderActions.forEach(action -> action.accept(shardManagerBuilder));
         this.shardManager = shardManagerBuilder.build();
-        builder.getManagerActions().forEach(action -> action.accept(shardManager));
+        builder.shardManActions.forEach(action -> action.accept(shardManager));
 
         getJDA().retrieveApplicationInfo().queue(applicationInfo -> this.applicationInfo = applicationInfo);
         LOGGER.info("Successfully launched Discord Bot in {}!", FormatUtils.formatDuration(System.currentTimeMillis() - startupTime));
@@ -203,7 +214,7 @@ public abstract class DiscordBot<S extends BotSettings> {
             onReady();
         }
 
-        this.builder.getShardActions().forEach(action -> action.accept(jda));
+        this.shardActions.forEach(action -> action.accept(jda));
     }
 
     @SubscribeEvent
@@ -232,14 +243,14 @@ public abstract class DiscordBot<S extends BotSettings> {
         shardManager.removeEventListener(listener);
     }
 
-    private void initActivities(@NotNull BotBuilder builder, @NotNull DefaultShardManagerBuilder shardManagerBuilder) {
-        if (builder.getActivities().isEmpty()) {
+    private void initActivities(@NotNull DefaultShardManagerBuilder shardManagerBuilder) {
+        if (this.activities.isEmpty()) {
             LOGGER.debug("No activities provided, skipping activity setup...");
             return;
         }
 
-        if (builder.getActivities().size() == 1) {
-            shardManagerBuilder.setActivity(builder.getActivities().get(0).get());
+        if (this.activities.size() == 1) {
+            shardManagerBuilder.setActivity(this.activities.get(0).get());
         } else {
 
             AtomicInteger index = new AtomicInteger();
@@ -247,16 +258,16 @@ public abstract class DiscordBot<S extends BotSettings> {
             try {
 
                 this.scheduler.scheduleAtFixedRate(() -> {
-                    shardManagerBuilder.setActivity(builder.getActivities().get(index.getAndIncrement()).get());
+                    shardManagerBuilder.setActivity(this.activities.get(index.getAndIncrement()).get());
 
-                    if (index.get() >= builder.getActivities().size()) {
+                    if (index.get() >= this.activities.size()) {
                         index.set(0);
                     }
-                }, 0, builder.getActivityUpdateRate(), TimeUnit.SECONDS);
+                }, 0, this.activityUpdateRate, TimeUnit.SECONDS);
 
             } catch (Throwable e) {
                 LOGGER.error("Failed to schedule activity updates!", e);
-                shardManagerBuilder.setActivity(builder.getActivities().get(0).get());
+                shardManagerBuilder.setActivity(this.activities.get(0).get());
             }
         }
     }

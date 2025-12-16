@@ -12,7 +12,6 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessagePollData;
 import org.jetbrains.annotations.NotNull;
 
-import javax.annotation.Nonnull;
 import java.util.Collection;
 
 /**
@@ -62,39 +61,34 @@ public interface MessageReply {
     }
 
     /**
-     * @see net.dv8tion.jda.api.interactions.callbacks.IModalCallback#replyModal(Modal)
-     */
-    ModalCallbackAction replyModal(@Nonnull Modal modal);
-
-    /**
      * @see IReplyCallback#replyComponents(Collection)
      */
-    ReplyAction replyComponents(@Nonnull Collection<? extends MessageTopLevelComponent> components);
+    ReplyAction replyComponents(@NotNull Collection<? extends MessageTopLevelComponent> components);
 
     /**
      * @see IReplyCallback#replyComponents(MessageTopLevelComponent, MessageTopLevelComponent...)
      */
-    ReplyAction replyComponents(@Nonnull MessageTopLevelComponent component, @Nonnull MessageTopLevelComponent... other);
+    ReplyAction replyComponents(@NotNull MessageTopLevelComponent component, @NotNull MessageTopLevelComponent... other);
 
     /**
      * @see IReplyCallback#replyComponents(ComponentTree)
      */
-    ReplyAction replyComponents(@Nonnull ComponentTree<? extends MessageTopLevelComponent> tree);
+    ReplyAction replyComponents(@NotNull ComponentTree<? extends MessageTopLevelComponent> tree);
 
     /**
      * @see IReplyCallback#replyFiles(FileUpload...)
      */
-    ReplyAction replyFiles(@Nonnull FileUpload... files);
+    ReplyAction replyFiles(@NotNull FileUpload... files);
 
     /**
      * @see IReplyCallback#replyFiles(Collection)
      */
-    ReplyAction replyFiles(@Nonnull Collection<? extends FileUpload> files);
+    ReplyAction replyFiles(@NotNull Collection<? extends FileUpload> files);
 
     /**
      * @see IReplyCallback#replyPoll(MessagePollData)
      */
-    ReplyAction replyPoll(@Nonnull MessagePollData poll);
+    ReplyAction replyPoll(@NotNull MessagePollData poll);
 
     /**
      * Sends a reply message in the same channel as the original message.

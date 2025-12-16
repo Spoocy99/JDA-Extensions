@@ -11,16 +11,16 @@ public class CommandPreProcessContext implements Cancellable {
 
     private final DiscordCommand command;
     private final CommandNode node;
-    private final CommandContext event;
+    private final CommandContext context;
 
     private boolean cancelled;
 
     public CommandPreProcessContext(@NotNull DiscordCommand command,
                                     @NotNull CommandNode node,
-                                    @NotNull CommandContext event) {
+                                    @NotNull CommandContext context) {
         this.command = command;
         this.node = node;
-        this.event = event;
+        this.context = context;
         this.cancelled = false;
     }
 
@@ -46,6 +46,6 @@ public class CommandPreProcessContext implements Cancellable {
 
     @NotNull
     public CommandContext getContext() {
-        return event;
+        return context;
     }
 }

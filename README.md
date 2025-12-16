@@ -69,37 +69,52 @@ You can find a basic implementation here: [BotExample.java](src/main/example/Bot
 The library provides a `BotBuilder` and  `BotConfig` that make it easier to configure and run a JDA bot.
 
 Your main bot class should extend `DiscordBot`:
+
 ```java
-public class BotExample extends DiscordBot {
+public class BotExample extends DiscordBot<BotConfig> {
     
+    // we use BotConfig as our Settings but you can also create your own class that implements BotSettings
+    // or extend the BotConfig class. See below.
+
     public BotExample(@NotNull BotConfig config, @NotNull BotBuilder builder) {
         super(config, builder);
         ...
     }
     
     ...
-    
+
 }
 ```
 
 You will also need a json config file for your bot token, online status, and other settings;
 ```java
-Document config = Document.readFile(JsonConfig.class, new File("config.json"));
-BotConfig botConfig = new BotConfig(config);
+BotConfig botConfig = new BotConfig(new File("config.json"));
 ```
 If you need other custom configuration options you may create your own config class that extends `BotConfig`. <br>
 You can find an example here: [ExtendedBotConfig.java](src/main/example/ExtendedBotConfig.java).
 
-Then create a `BotBuilder` to register commands and listeners:
+Then create a `BotBuilder` to register a command manager and listeners:
 ```java
 BotBuilder builder = new BotBuilder()
         .addActivity(() -> Activity.playing("Testing..."))
         .setAllIntents()
-        .addCommand(new CommandTree("ping", "Replies with Pong!")
-                .executes(context -> context.reply("Pong!"))
-                .build())
-        .addListener(new ListenerExample())
-        .addCommand(AnnotationCommandExample.class);
+        .setCommandManager(
+                DefaultCommandManager.builder()         // can also be your own implementation of the interface
+                        
+                        // Add commands using the CommandTree builder to the command manager
+                        // You can also register commands afterwards but you will have to run the updateCommands 
+                        // function again on your shards
+                        .register(
+                                new CommandTree("ping", "Replies with Pong!")
+                                        .executes(context -> context.reply("Pong!"))
+                                        .build()
+                        )
+                        
+                        // Register Annotation based command
+                        .register(AnnotationCommandExample.class)
+                        .build()
+        )
+        .addListener(new ListenerExample());
 ```
 
 Finally, create your bot instance:

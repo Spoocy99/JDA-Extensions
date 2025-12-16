@@ -186,7 +186,7 @@ public class MessageCommandContext extends AbstractCommandContext {
     }
 
     @Override
-    public ModalCallbackAction replyModal(@NotNull Modal modal) {
+    public @NotNull ModalCallbackAction replyModal(@NotNull Modal modal) {
         throw new UnsupportedOperationException("Cannot reply with a modal to a message command!");
     }
 

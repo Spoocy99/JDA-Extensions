@@ -128,6 +128,26 @@ public class DefaultCommandManager implements CommandManager {
         LOGGER.info("Commited {} commands on shard {}", count, jda.getShardInfo().getShardId());
     }
 
+    private void handleCommandPreProcess(@NotNull CommandPreProcessContext context) {
+        Scheduler.runSync(() -> this.listener.onPreProcess(context))
+                .onException(e -> this.listener.onException(context.getContext(), e));
+    }
+
+    private void handleUnknownCommand(@NotNull MessageReceivedEvent event) {
+        Scheduler.runAsync(() -> this.listener.onUnknownCommand(event))
+                .onException(e -> LOGGER.error("Exception in unknown command handler.", e));
+    }
+
+    private void handleNoPermissions(@NotNull CommandContext context) {
+        Scheduler.runAsync(() -> this.listener.onNoPermissions(context))
+                .onException(e -> this.listener.onException(context, e));
+    }
+
+    private void handleCooldown(@NotNull CommandContext context) {
+        Scheduler.runAsync(() -> this.listener.onCooldown(context))
+                .onException(e -> this.listener.onException(context, e));
+    }
+
     @Override
     public void handleCommand(@NotNull SlashCommandInteractionEvent event) {
         if (!this.useSlashCommands()) {
@@ -154,64 +174,7 @@ public class DefaultCommandManager implements CommandManager {
     }
 
     @Override
-    public void handlePrefixCommand(@NotNull MessageReceivedEvent event) {
-        if (!this.usePrefixCommands()) {
-            return;
-        }
-
-        String raw = event.getMessage().getContentRaw();
-        if (!raw.startsWith(this.messagePrefix)) {
-            return;
-        }
-
-        String fullCommand = raw.substring(0, this.messagePrefix.length());
-        String[] args = fullCommand.split(" ");
-
-        String commandName = args[0];
-        String subCommandName = null;
-        String subCommandGroup = null;
-
-        CommandData data = (CommandData) getCommand(commandName);
-
-        if (data == null) {
-            this.listener.onUnknownCommand(null);
-            return;
-        }
-
-        CommandNodeHolder holder = data;
-        CommandNode found = null;
-        int argCount = 1;
-
-        while (argCount < args.length) {
-
-            String arg = args[argCount];
-
-            if (subCommandGroup == null) {
-
-                try {
-                    holder = data.getGroup(arg);
-                    subCommandGroup = arg;
-                    argCount++;
-                    break;
-                } catch (IllegalArgumentException ignored) { }
-
-            }
-
-            if (subCommandName == null) {
-
-                try {
-                    found = holder.getNode(arg);
-                    subCommandName = arg;
-                    argCount++;
-                    break;
-                } catch (IllegalArgumentException ignored) { }
-            }
-
-
-
-        }
-
-    }
+    public void handlePrefixCommand(@NotNull MessageReceivedEvent event) { }
 
     @Nullable
     private CommandNodeData findNode(
@@ -257,8 +220,7 @@ public class DefaultCommandManager implements CommandManager {
 
             for (CommandPermission p : permission) {
                 if (!p.isCovered(context)) {
-                    Scheduler.runAsync(() -> this.listener.onNoPermissions(context))
-                            .onException(e -> this.listener.onException(context, e));
+                    this.handleNoPermissions(context);
                     return;
                 }
             }
@@ -266,8 +228,7 @@ public class DefaultCommandManager implements CommandManager {
         }
 
         if (subCommand.hasCooldown() && !subCommand.cooldown().shouldExecute(context)) {
-            Scheduler.runAsync(() -> this.listener.onCooldown(context))
-                    .onException(e -> this.listener.onException(context, e));
+            this.handleCooldown(context);
             return;
         }
 
@@ -317,6 +278,16 @@ public class DefaultCommandManager implements CommandManager {
 
         public Builder messagePrefix(@Nullable String prefix) {
             this.messagePrefix = prefix;
+            return this;
+        }
+
+        public Builder register(@NotNull DiscordCommand... command) {
+            this.commands.addAll(Arrays.asList(command));
+            return this;
+        }
+
+        public Builder register(@NotNull Class<?>... annotatedClass) {
+            this.commandAnnotationClasses.addAll(Arrays.asList(annotatedClass));
             return this;
         }
 

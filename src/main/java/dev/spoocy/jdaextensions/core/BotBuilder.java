@@ -1,10 +1,8 @@
 package dev.spoocy.jdaextensions.core;
 
 import dev.spoocy.jdaextensions.commands.manager.CommandManager;
-import dev.spoocy.jdaextensions.commands.structure.DiscordCommand;
 import dev.spoocy.utils.common.collections.Collector;
 import dev.spoocy.utils.common.log.ILogger;
-import lombok.Getter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -26,35 +24,21 @@ public class BotBuilder {
 
     private static final ILogger LOGGER = ILogger.forThisClass();
 
-	private final List<Consumer<? super DefaultShardManagerBuilder>> builder;
-	private final List<Consumer<? super ShardManager>> manager;
-	private final List<Consumer<? super JDA>> shards;
-
-    @Getter
-    private final List<DiscordCommand> commands;
-    @Getter
-    private final List<Class<?>> commandAnnotationClasses;
-    @Getter
-    private final List<Object> listeners;
-    @Getter
-    private final List<Supplier<? extends Activity>> activities;
-    @Getter
-    private int activityUpdateRate;
-    @Getter
-    private CommandManager commandManager;
-    @Getter
+	protected final List<Consumer<? super DefaultShardManagerBuilder>> builderActions;
+	protected final List<Consumer<? super ShardManager>> shardManActions;
+	protected final List<Consumer<? super JDA>> shardActions;
+    protected final List<Object> listeners;
+    protected final List<Supplier<? extends Activity>> activities;
+    protected int activityUpdateRate;
+    protected CommandManager commandManager;
     protected MemberCachePolicy memberCachePolicy;
-    @Getter
-    private EnumSet<CacheFlag> cacheFlags;
-    @Getter
-    private List<GatewayIntent> intents;
+    protected EnumSet<CacheFlag> cacheFlags;
+    protected List<GatewayIntent> intents;
 
     public BotBuilder() {
-        this.builder = new ArrayList<>();
-        this.manager = new ArrayList<>();
-        this.shards = new ArrayList<>();
-        this.commands = new ArrayList<>();
-        this.commandAnnotationClasses = new ArrayList<>();
+        this.builderActions = new ArrayList<>();
+        this.shardManActions = new ArrayList<>();
+        this.shardActions = new ArrayList<>();
         this.listeners = new ArrayList<>();
         this.activities = new ArrayList<>();
         this.activityUpdateRate = -1;
@@ -64,40 +48,18 @@ public class BotBuilder {
         this.intents = new ArrayList<>();
     }
 
-    public List<Consumer<? super DefaultShardManagerBuilder>> getBuilderActions() {
-        return builder;
-    }
-
-    public List<Consumer<? super ShardManager>> getManagerActions() {
-        return manager;
-    }
-
-    public List<Consumer<? super JDA>> getShardActions() {
-        return shards;
-    }
-
     public BotBuilder forShardManagerBuilder(@NotNull Consumer<? super DefaultShardManagerBuilder> action) {
-		builder.add(action);
+		builderActions.add(action);
 		return this;
 	}
 
     public BotBuilder forShardManager(@NotNull Consumer<? super ShardManager> action) {
-        manager.add(action);
+        shardManActions.add(action);
         return this;
     }
 
     public BotBuilder forShards(@NotNull Consumer<? super JDA> action) {
-        shards.add(action);
-        return this;
-    }
-
-    public BotBuilder addCommand(@NotNull DiscordCommand command) {
-        this.commands.add(command);
-        return this;
-    }
-
-    public BotBuilder addCommand(@NotNull Class<?> annotatedClass) {
-        this.commandAnnotationClasses.add(annotatedClass);
+        shardActions.add(action);
         return this;
     }
 
@@ -139,8 +101,9 @@ public class BotBuilder {
 		return setIntents(GatewayIntent.values());
 	}
 
-    public void setCommandManager(@NotNull CommandManager commandManager) {
+    public BotBuilder setCommandManager(@NotNull CommandManager commandManager) {
         this.commandManager = commandManager;
+        return this;
     }
 
     public void validate() {
@@ -165,12 +128,11 @@ public class BotBuilder {
 
     public String formatInstanceInfo() {
         return "BotBuilder Configuration \n" +
-                " - [I] Commands:   " + formatList(commands, true) + "\n" +
-                " - [A] Commands:   " + formatList(commandAnnotationClasses, true) + "\n" +
-                " - Listeners:      " + formatList(listeners, true) + "\n" +
-                " - Activities:     " + activities.size() + "\n" +
-                " - Intents:        " + formatList(intents, false) + "\n" +
-                " - CacheFlags:     " + formatList(cacheFlags, false) + "\n";
+                " - Command Manager:    " + (this.commandManager == null ? "NONE" : this.commandManager.getClass().getSimpleName() + " (" + commandManager.getCommands().size() + " commands)") + "\n" +
+                " - Listeners:          " + formatList(listeners, true) + "\n" +
+                " - Activities:         " + activities.size() + "\n" +
+                " - Intents:            " + formatList(intents, false) + "\n" +
+                " - CacheFlags:         " + formatList(cacheFlags, false) + "\n";
     }
 
     private String formatList(@NotNull Collection<?> list, boolean useClassNames) {
@@ -206,10 +168,10 @@ public class BotBuilder {
     public String toString() {
         return "BotBuilder{" +
                 "activities=" + activities +
-                ", builder=" + builder +
-                ", manager=" + manager +
-                ", shards=" + shards +
-                ", commands=" + commands +
+                ", builder=" + builderActions +
+                ", manager=" + shardManActions +
+                ", shards=" + shardActions +
+                ", commands=" + commandManager +
                 ", listeners=" + listeners +
                 ", activityUpdateRate=" + activityUpdateRate +
                 ", memberCachePolicy=" + memberCachePolicy +

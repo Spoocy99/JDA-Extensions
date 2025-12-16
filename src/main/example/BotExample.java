@@ -1,9 +1,8 @@
+import dev.spoocy.jdaextensions.commands.manager.impl.DefaultCommandManager;
 import dev.spoocy.jdaextensions.commands.tree.CommandTree;
 import dev.spoocy.jdaextensions.core.BotBuilder;
 import dev.spoocy.jdaextensions.core.BotConfig;
 import dev.spoocy.jdaextensions.core.DiscordBot;
-import dev.spoocy.utils.config.Document;
-import dev.spoocy.utils.config.documents.JsonConfig;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
@@ -17,62 +16,63 @@ import java.util.concurrent.TimeUnit;
  * @author Spoocy99 | GitHub: Spoocy99
  */
 
-public class BotExample extends DiscordBot {
+public class BotExample extends DiscordBot<BotConfig> {
 
     public static void main(String[] args) {
 
-        // read config from a JSON file named "config.json" located in the working directory
-        Document config = Document.readFile(JsonConfig.class, new File("config.json"));
-
-        // create an instance of a custom BotConfig implementation
-        ExtendedBotConfig botConfig = new ExtendedBotConfig(config);
+        // create an instance of a custom BotConfig implementation that reads data from a json file
+        ExtendedBotConfig botConfig = new ExtendedBotConfig(new File("config.json"));
 
         BotBuilder builder = new BotBuilder()
                 .addActivity(() -> Activity.playing("Testing..."))
                 .setAllIntents()
-
-                // Add commands using the CommandTree builder
-                .addCommand(
-                        // Command: /ping
-                        new CommandTree("ping", "Replies with Pong!")
-                                .executes(context -> {
-                                    context.reply("Pong!");
-                                })
-                                .build()
-                )
-                .addCommand(
-                        new CommandTree("test", "Second command")
-
-                                // Command: /test first
-                                .then(CommandTree.command("first", "First subcommand")
-                                        .executes(context -> {
-                                            context.reply("You executed the first subcommand!");
-                                        })
+                .setCommandManager(
+                        DefaultCommandManager.builder()
+                                // Add commands using the CommandTree builder
+                                .register(
+                                        // Command: /ping
+                                        new CommandTree("ping", "Replies with Pong!")
+                                                .executes(context -> {
+                                                    context.reply("Pong!");
+                                                })
+                                                .build()
                                 )
+                                .register(
+                                        new CommandTree("test", "Second command")
 
-                                // Command: /test second
-                                .then(CommandTree.command("second", "Second subcommand")
-                                        .executes(context -> {
+                                                // Command: /test first
+                                                .then(CommandTree.command("first", "First subcommand")
+                                                        .executes(context -> {
+                                                            context.reply("You executed the first subcommand!");
+                                                        })
+                                                )
 
-                                            context.reply("What do you think about this bot? Please reply within 30 seconds.");
+                                                // Command: /test second
+                                                .then(CommandTree.command("second", "Second subcommand")
+                                                        .executes(context -> {
 
-                                            getInstance().getEventWaiter().waitFor(MessageReceivedEvent.class)
-                                                    .runIf(event -> event.getAuthor().getIdLong() == context.getUser().getIdLong())
-                                                    .timeoutAfter(30, TimeUnit.SECONDS)
-                                                    .runOnTimeout( () -> {
-                                                        context.reply("You did not reply in time!");
-                                                    })
-                                                    .run(event -> {
-                                                        context.reply("You replied with: " + event.getMessage().getContentDisplay());
-                                                    })
-                                                    .build();
+                                                            context.reply("What do you think about this bot? Please reply within 30 seconds.");
+
+                                                            getInstance().getEventWaiter().waitFor(MessageReceivedEvent.class)
+                                                                    .runIf(event -> event.getAuthor().getIdLong() == context.getUser().getIdLong())
+                                                                    .timeoutAfter(30, TimeUnit.SECONDS)
+                                                                    .runOnTimeout(() -> {
+                                                                        context.reply("You did not reply in time!");
+                                                                    })
+                                                                    .run(event -> {
+                                                                        context.reply("You replied with: " + event.getMessage().getContentDisplay());
+                                                                    })
+                                                                    .build();
 
 
-                                        })
+                                                        })
+                                                )
+                                                .build()
                                 )
+                                .register(AnnotationCommandExample.class)     // annotation-based command are also supported
                                 .build()
+
                 )
-                .addCommand(AnnotationCommandExample.class)     // annotation-based command are also supported
                 .addListener(new ListenerExample())             // supports both ListenerAdapter and annotation-based listeners
                 ;
 

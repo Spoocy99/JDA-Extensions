@@ -273,6 +273,6 @@ public interface CommandContext extends MessageReply {
      *
      * @see CommandContext#isInteraction()
      */
-    @Override
+    @NotNull
     ModalCallbackAction replyModal(@NotNull Modal modal);
 }

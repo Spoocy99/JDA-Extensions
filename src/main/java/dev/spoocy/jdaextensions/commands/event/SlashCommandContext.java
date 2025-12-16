@@ -171,7 +171,7 @@ public class SlashCommandContext extends AbstractCommandContext {
 
 
     @Override
-    public ModalCallbackAction replyModal(@NotNull Modal modal) {
+    public @NotNull ModalCallbackAction replyModal(@NotNull Modal modal) {
         return this.event.replyModal(modal);
     }
 

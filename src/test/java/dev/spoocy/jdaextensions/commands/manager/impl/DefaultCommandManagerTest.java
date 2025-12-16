@@ -10,7 +10,7 @@ public class DefaultCommandManagerTest {
 
     @Test
     public void registerAndGetCommand() {
-        DefaultCommandManager mgr = new DefaultCommandManager();
+        DefaultCommandManager mgr = DefaultCommandManager.builder().build();
 
         DiscordCommand cmd = new CommandTree("foo", "desc").build();
         mgr.register(cmd);
@@ -21,7 +21,7 @@ public class DefaultCommandManagerTest {
 
     @Test
     public void removeCommandRemoves() {
-        DefaultCommandManager mgr = new DefaultCommandManager();
+        DefaultCommandManager mgr = DefaultCommandManager.builder().build();
         DiscordCommand cmd = new CommandTree("foo", "desc").build();
         mgr.register(cmd);
 
@@ -31,9 +31,12 @@ public class DefaultCommandManagerTest {
 
     @Test
     public void setAndGetListener() {
-        DefaultCommandManager mgr = new DefaultCommandManager();
         CommandListenerImpl l = new CommandListenerImpl();
-        mgr.setListener(l);
+
+        DefaultCommandManager mgr = DefaultCommandManager.builder()
+                .listener(l)
+                .build();
+
         assertSame(l, mgr.getListener());
     }
 
