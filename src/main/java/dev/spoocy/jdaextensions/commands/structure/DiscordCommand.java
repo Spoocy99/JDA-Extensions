@@ -22,7 +22,7 @@ public interface DiscordCommand extends CommandNodeHolder {
     /**
      * Get the name of this command.
      *
-     * @return the name.
+     * @return the name
      */
     @Override
     @NotNull String name();
@@ -30,7 +30,7 @@ public interface DiscordCommand extends CommandNodeHolder {
     /**
      * Get the description of this command.
      *
-     * @return the description.
+     * @return the description
      */
     @Override
     @NotNull String description();
@@ -38,7 +38,7 @@ public interface DiscordCommand extends CommandNodeHolder {
     /**
      * Get the context type of this command.
      *
-     * @return the context type.
+     * @return the context type
      */
     @NotNull
     Set<InteractionContextType> context();
@@ -46,7 +46,7 @@ public interface DiscordCommand extends CommandNodeHolder {
     /**
      * Get the default member permissions required to use this command.
      *
-     * @return the default permissions.
+     * @return the default permissions
      *
      * @see DefaultMemberPermissions
      */
@@ -56,35 +56,37 @@ public interface DiscordCommand extends CommandNodeHolder {
     /**
      * Check if this command is marked as NSFW.
      *
-     * @return true if NSFW, false otherwise.
+     * @return {@code true} if NSFW, {@code false} otherwise
      */
     boolean nsfw();
 
     /**
      * Get the root command node.
      *
-     * @return the root node.
+     * @return the root node
      *
      * @throws IllegalStateException
-     *         if this command has no root node.
+     *         if this command has no root node
      */
     @NotNull
     CommandNode rootNode();
 
     /**
-     * Get a sub-command by name.
+     * Get the names of all sub-command groups.
+     *
+     * @return an array of sub-command group names
+     */
+    String[] getGroupNames();
+
+    /**
+     * Check if this command has a sub-command group with the provided name.
      *
      * @param name
-     *        the name of the node
+     *          the name of the group
      *
-     * @return the node with the provided name.
-     *
-     * @throws IllegalArgumentException
-     *         if no such node exists.
+     * @return {@code true} if the group exists, {@code false} otherwise
      */
-    @NotNull
-    @Override
-    CommandNode getNode(@NotNull String name);
+    boolean hasGroup(String name);
 
     /**
      * Get a sub-command group by name.

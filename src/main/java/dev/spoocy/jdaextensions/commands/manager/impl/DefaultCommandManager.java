@@ -2,6 +2,7 @@ package dev.spoocy.jdaextensions.commands.manager.impl;
 
 import dev.spoocy.jdaextensions.commands.manager.CommandListener;
 import dev.spoocy.jdaextensions.commands.manager.CommandManager;
+import dev.spoocy.jdaextensions.commands.structure.CommandNode;
 import dev.spoocy.jdaextensions.commands.structure.CommandNodeHolder;
 import dev.spoocy.jdaextensions.commands.structure.DiscordCommand;
 import dev.spoocy.jdaextensions.commands.structure.impl.CommandData;
@@ -17,7 +18,7 @@ import dev.spoocy.utils.common.scheduler.Scheduler;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.hooks.SubscribeEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,22 +35,38 @@ public class DefaultCommandManager implements CommandManager {
     private final ILogger LOGGER = ILogger.forThisClass();
 
     private final Map<String, CommandData> commandMap = new ConcurrentHashMap<>();
-    private CommandListener listener = new CommandListener() {
-    };
+    private final boolean useSlashCommands;
+    private final String messagePrefix;
+    private final CommandListener listener;
 
-    public DefaultCommandManager() {
+    private DefaultCommandManager(
+            boolean useSlashCommands,
+            @Nullable String messagePrefix,
+            @NotNull CommandListener listener) {
 
+        this.useSlashCommands = useSlashCommands;
+        this.messagePrefix = messagePrefix;
+        this.listener = listener;
+    }
+
+    @Override
+    public boolean useSlashCommands() {
+        return this.useSlashCommands;
+    }
+
+    @Override
+    public boolean usePrefixCommands() {
+        return !StringUtils.isNullOrEmpty(this.messagePrefix);
+    }
+
+    @Override
+    public @Nullable String getPrefix() {
+        return this.messagePrefix;
     }
 
     @Override
     public @NotNull CommandListener getListener() {
         return this.listener;
-    }
-
-    @Override
-    public CommandManager setListener(@NotNull CommandListener listener) {
-        this.listener = listener;
-        return this;
     }
 
     @Override
@@ -111,7 +128,121 @@ public class DefaultCommandManager implements CommandManager {
         LOGGER.info("Commited {} commands on shard {}", count, jda.getShardInfo().getShardId());
     }
 
-    private void handleEvent(@NotNull CommandData data, @NotNull CommandNodeData subCommand, @NotNull CommandContext context) {
+    @Override
+    public void handleCommand(@NotNull SlashCommandInteractionEvent event) {
+        if (!this.useSlashCommands()) {
+            return;
+        }
+
+        CommandNodeData data = findNode(
+                event.getName(),
+                event.getSubcommandGroup(),
+                event.getSubcommandName()
+        );
+
+        if (data == null) {
+            LOGGER.warn("Received slash command interaction for unregistered command '{}'", event.getName());
+            return;
+        }
+
+        if (data.acknowledge()) {
+            event.deferReply(data.ephemeral()).queue();
+        }
+
+        CommandContext context = new SlashCommandContext(this, event);
+        executeContext(CommandData.extract(data), data, context);
+    }
+
+    @Override
+    public void handlePrefixCommand(@NotNull MessageReceivedEvent event) {
+        if (!this.usePrefixCommands()) {
+            return;
+        }
+
+        String raw = event.getMessage().getContentRaw();
+        if (!raw.startsWith(this.messagePrefix)) {
+            return;
+        }
+
+        String fullCommand = raw.substring(0, this.messagePrefix.length());
+        String[] args = fullCommand.split(" ");
+
+        String commandName = args[0];
+        String subCommandName = null;
+        String subCommandGroup = null;
+
+        CommandData data = (CommandData) getCommand(commandName);
+
+        if (data == null) {
+            this.listener.onUnknownCommand(null);
+            return;
+        }
+
+        CommandNodeHolder holder = data;
+        CommandNode found = null;
+        int argCount = 1;
+
+        while (argCount < args.length) {
+
+            String arg = args[argCount];
+
+            if (subCommandGroup == null) {
+
+                try {
+                    holder = data.getGroup(arg);
+                    subCommandGroup = arg;
+                    argCount++;
+                    break;
+                } catch (IllegalArgumentException ignored) { }
+
+            }
+
+            if (subCommandName == null) {
+
+                try {
+                    found = holder.getNode(arg);
+                    subCommandName = arg;
+                    argCount++;
+                    break;
+                } catch (IllegalArgumentException ignored) { }
+            }
+
+
+
+        }
+
+    }
+
+    @Nullable
+    private CommandNodeData findNode(
+            @NotNull String commandName,
+            @Nullable String subCommandGroup,
+            @Nullable String subCommandName
+    ) {
+        try {
+            CommandData data = (CommandData) getCommand(commandName);
+            if (data == null) {
+                return null;
+            }
+
+            CommandNodeHolder holder = data;
+
+            if (StringUtils.isNullOrEmpty(subCommandName)) {
+                return data.rootNode();
+            }
+
+            if (!StringUtils.isNullOrEmpty(subCommandGroup)) {
+                holder = data.getSubCommandGroupData(subCommandGroup);
+            }
+
+            return (CommandNodeData) holder.getNode(subCommandName);
+        } catch (Exception e) {
+            LOGGER.error("Failed to find command node for interaction event", e);
+            return null;
+        }
+    }
+
+    private void executeContext(@NotNull CommandData data, @NotNull CommandNodeData subCommand, @NotNull CommandContext context) {
 
         CommandPreProcessContext preProcessEvent = new CommandPreProcessContext(data, subCommand, context);
         this.listener.onPreProcess(preProcessEvent);
@@ -157,49 +288,50 @@ public class DefaultCommandManager implements CommandManager {
 
     }
 
-    @SubscribeEvent
-    public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
-
-        String name = event.getName();
-        CommandData data = (CommandData) getCommand(name);
-        if (data == null) {
-            LOGGER.warn("Received slash command interaction for unregistered command '{}'", name);
-            return;
-        }
-        CommandNodeData subCommand = findNode(data, event);
-
-        if (subCommand == null) {
-            LOGGER.warn("Received slash command interaction for unregistered sub-command of '{}'", name);
-            return;
-        }
-
-        if(subCommand.acknowledge()) {
-            event.deferReply(subCommand.ephemeral()).queue();
-        }
-
-        CommandContext context = new SlashCommandContext(this, event);
-        handleEvent(data, subCommand, context);
+    public static Builder builder() {
+        return new Builder();
     }
 
-    private CommandNodeData findNode(@NotNull CommandData data, @NotNull SlashCommandInteractionEvent event) {
-        try {
-            CommandNodeHolder holder = data;
+    public static class Builder {
 
-            String subCommandName = event.getSubcommandName();
-            if (StringUtils.isNullOrEmpty(subCommandName)) {
-                return data.rootNode();
-            }
+        private CommandListener listener = new CommandListener() {
+        };
+        private boolean useSlashCommands = true;
+        private String messagePrefix = null;
+        private final List<DiscordCommand> commands = new ArrayList<>();
+        private final List<Class<?>> commandAnnotationClasses = new ArrayList<>();
 
-            String group = event.getSubcommandGroup();
-            if (!StringUtils.isNullOrEmpty(group)) {
-                holder = data.getSubCommandGroupData(group);
-            }
+        public Builder() {
 
-            return (CommandNodeData) holder.getNode(subCommandName);
-        } catch (Exception e) {
-            LOGGER.error("Failed to find command node for interaction event", e);
-            return null;
         }
+
+        public Builder listener(@NotNull CommandListener listener) {
+            this.listener = listener;
+            return this;
+        }
+
+        public Builder useSlashCommands(boolean useSlashCommands) {
+            this.useSlashCommands = useSlashCommands;
+            return this;
+        }
+
+        public Builder messagePrefix(@Nullable String prefix) {
+            this.messagePrefix = prefix;
+            return this;
+        }
+
+        public DefaultCommandManager build() {
+            DefaultCommandManager manager = new DefaultCommandManager(
+                    this.useSlashCommands,
+                    this.messagePrefix,
+                    this.listener
+            );
+
+            manager.register(this.commands);
+            manager.registerClasses(this.commandAnnotationClasses);
+            return manager;
+        }
+
     }
 
 }

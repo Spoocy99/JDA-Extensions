@@ -16,6 +16,8 @@ import net.dv8tion.jda.api.entities.ApplicationInfo;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.events.session.SessionDisconnectEvent;
 import net.dv8tion.jda.api.events.session.SessionResumeEvent;
@@ -26,6 +28,7 @@ import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
 import okhttp3.OkHttpClient;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -38,44 +41,27 @@ import java.util.function.Consumer;
  * @author Spoocy99 | GitHub: Spoocy99
  */
 
-public abstract class DiscordBot {
+public abstract class DiscordBot<S extends BotSettings> {
 
     private static final ILogger LOGGER = ILogger.forThisClass();
 
-    private static DiscordBot GLOBAL_INSTANCE;
-
-    public static <T extends DiscordBot> T getInstance() {
-        return (T) GLOBAL_INSTANCE;
-    }
-
-    @Getter
-    private final long startupTime;
-    @Getter
-    private final BotConfig config;
-    @Getter
     private final BotBuilder builder;
-    @Getter
+    private final S config;
+    private final long startupTime;
     private final IEventManager eventManager;
-    @Getter
-    private final CommandManager commandManager;
-    @Getter
     private final ShardManager shardManager;
-    @Getter
     private ApplicationInfo applicationInfo;
-    @Getter
     private final EventWaiter eventWaiter;
+
+    @Nullable
+    private final CommandManager commandManager;
 
     private final ScheduledExecutorService scheduler = Scheduler.newScheduledThreadPool(1);
 
-    public DiscordBot(@NotNull BotConfig config, @NotNull BotBuilder builder) {
-        if (GLOBAL_INSTANCE != null) {
-            throw new IllegalStateException("Bot is already initialized!");
-        }
-        GLOBAL_INSTANCE = this;
-
-        this.startupTime = System.currentTimeMillis();
-        this.config = config;
+    public DiscordBot(@NotNull S config, @NotNull BotBuilder builder) {
         this.builder = builder;
+        this.config = config;
+        this.startupTime = System.currentTimeMillis();
         this.eventManager = new AdvancedEventManager();
         this.eventWaiter = new EventWaiter(Scheduler.newScheduledThreadPool(1), true);
 
@@ -100,11 +86,9 @@ public abstract class DiscordBot {
 
         initActivities(builder, shardManagerBuilder);
 
-        this.commandManager = builder.getCommandManager() == null ? new DefaultCommandManager() : builder.getCommandManager();
-        this.commandManager.register(builder.getCommands());
-        this.commandManager.registerClasses(builder.getCommandAnnotationClasses());
+        this.commandManager = builder.getCommandManager();
 
-        shardManagerBuilder.addEventListeners(this, this.commandManager, this.eventWaiter);
+        shardManagerBuilder.addEventListeners(this, this.eventWaiter);
         shardManagerBuilder.addEventListeners(builder.getListeners().toArray());
 
         builder.getBuilderActions().forEach(action -> action.accept(shardManagerBuilder));
@@ -132,6 +116,47 @@ public abstract class DiscordBot {
     protected abstract void onReady();
 
     protected abstract void onShutdown();
+
+    public long getBotStartupTime() {
+        return this.startupTime;
+    }
+
+    @NotNull
+    public S getConfig() {
+        return this.config;
+    }
+
+    @NotNull
+    public IEventManager getEventManager() {
+        return this.eventManager;
+    }
+
+    @NotNull
+    public ShardManager getShardManager() {
+        return this.shardManager;
+    }
+
+    @NotNull
+    public ApplicationInfo getApplicationInfo() {
+        return this.applicationInfo;
+    }
+
+    @NotNull
+    public EventWaiter getEventWaiter() {
+        return this.eventWaiter;
+    }
+
+    public boolean useCommandManager() {
+        return this.commandManager != null;
+    }
+
+    @NotNull
+    public CommandManager getCommandManager() {
+        if (this.commandManager == null) {
+            throw new IllegalStateException("This bot instance does not use a CommandManager!");
+        }
+        return this.commandManager;
+    }
 
     public JDA getJDA() {
         return Collector.of(shardManager.getShardCache().stream()).findFirst().orElseThrow(() -> new IllegalStateException("No JDA is ready yet!"));
@@ -179,7 +204,6 @@ public abstract class DiscordBot {
         }
 
         this.builder.getShardActions().forEach(action -> action.accept(jda));
-        commandManager.updateCommands(jda);
     }
 
     @SubscribeEvent
@@ -235,6 +259,18 @@ public abstract class DiscordBot {
                 shardManagerBuilder.setActivity(builder.getActivities().get(0).get());
             }
         }
+    }
+
+    @SubscribeEvent
+    public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
+        if (this.commandManager == null) return;
+        this.commandManager.handleCommand(event);
+    }
+
+    @SubscribeEvent
+    public void onMessage(@NotNull MessageReceivedEvent event) {
+        if (this.commandManager == null) return;
+        this.commandManager.handlePrefixCommand(event);
     }
 
 }

@@ -2,6 +2,9 @@ package dev.spoocy.jdaextensions.commands.manager;
 
 import dev.spoocy.jdaextensions.commands.structure.DiscordCommand;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,23 +17,37 @@ import java.util.Collection;
 public interface CommandManager {
 
     /**
-     * Gets the current {@link CommandListener} assigned to this manager.
+     * Checks if slash commands are enabled in this manager.
+     *
+     * @return {@code true} if slash commands are enabled, {@code false} otherwise.
+     */
+    boolean useSlashCommands();
+
+    /**
+     * Checks if prefix commands are enabled in this manager.
+     *
+     * @return {@code true} if prefix commands are enabled, {@code false} otherwise.
+     */
+    boolean usePrefixCommands();
+
+    /**
+     * Gets the command prefix used for prefix commands.
+     *
+     * @return the command prefix, or null if prefix commands are disabled.
+     *
+     * @see #usePrefixCommands()
+     */
+    @Nullable
+    String getPrefix();
+
+    /**
+     * Gets the {@link CommandListener} assigned to this manager.
+     * This listener handles command events such as errors.
      *
      * @return the command listener instance.
      */
     @NotNull
     CommandListener getListener();
-
-    /**
-     * Sets the {@link CommandListener} for this manager.
-     * If no listener is set, a default empty listener will be used.
-     *
-     * @param listener
-     *        the command listener to set.
-     *
-     * @return the current command manager instance.
-     */
-    CommandManager setListener(@NotNull CommandListener listener);
 
     /**
      * Gets all registered commands.
@@ -118,4 +135,23 @@ public interface CommandManager {
      * @see JDA#updateCommands()
      */
     void updateCommands(@NotNull JDA jda);
+
+    /**
+     * Handles a slash command interaction event.
+     *
+     * @param event
+     *        the slash command interaction event to handle.
+     */
+    @ApiStatus.Internal
+    void handleCommand(@NotNull SlashCommandInteractionEvent event);
+
+    /**
+     * Executes a command if the message received event
+     * would trigger a prefix command.
+     *
+     * @param event
+     *        the message received event to handle.
+     */
+    @ApiStatus.Internal
+    void handlePrefixCommand(@NotNull MessageReceivedEvent event);
 }

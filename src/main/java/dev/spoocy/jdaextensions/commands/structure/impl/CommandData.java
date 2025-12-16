@@ -2,6 +2,7 @@ package dev.spoocy.jdaextensions.commands.structure.impl;
 
 import com.google.common.collect.ImmutableSet;
 import dev.spoocy.jdaextensions.commands.arguments.impl.AbstractArgument;
+import dev.spoocy.jdaextensions.commands.structure.CommandNode;
 import dev.spoocy.jdaextensions.commands.structure.CommandNodeHolder;
 import dev.spoocy.jdaextensions.commands.structure.DiscordCommand;
 import lombok.Getter;
@@ -75,6 +76,18 @@ public class CommandData extends AbstractCommandNodeHolder implements DiscordCom
     }
 
     @Override
+    public String[] getGroupNames() {
+        return this.subCommandGroups
+                .keySet()
+                .toArray(String[]::new);
+    }
+
+    @Override
+    public boolean hasGroup(String name) {
+        return this.subCommandGroups.containsKey(name);
+    }
+
+    @Override
     public @NotNull CommandNodeHolder getGroup(@NotNull String name) {
         return this.getSubCommandGroupData(name);
     }
@@ -125,5 +138,19 @@ public class CommandData extends AbstractCommandNodeHolder implements DiscordCom
         }
 
         return data;
+    }
+
+    @NotNull
+    public static CommandData extract(@NotNull CommandNode node) {
+       return extract(node.parent());
+    }
+
+    @NotNull
+    public static CommandData extract(@NotNull CommandNodeHolder node) {
+        CommandNodeHolder holder = node.parent();
+        if (!(holder instanceof CommandData)) {
+            throw new IllegalArgumentException("The provided node is not part of a DiscordCommand!");
+        }
+        return (CommandData) holder;
     }
 }

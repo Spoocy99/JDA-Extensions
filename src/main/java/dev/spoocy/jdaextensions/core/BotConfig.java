@@ -3,10 +3,12 @@ package dev.spoocy.jdaextensions.core;
 import dev.spoocy.utils.common.collections.Collector;
 import dev.spoocy.utils.common.log.LogLevel;
 import dev.spoocy.utils.config.Document;
+import dev.spoocy.utils.config.documents.JsonConfig;
 import net.dv8tion.jda.api.OnlineStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -15,10 +17,16 @@ import java.util.List;
  * @author Spoocy99 | GitHub: Spoocy99
  */
 
-public class BotConfig {
+public class BotConfig implements BotSettings {
 
     private final HashMap<String, Object> defaults = new HashMap<>();
     private final Document file;
+
+    public BotConfig(@NotNull File jsonFile) {
+        this.file = Document.readFile(JsonConfig.class, jsonFile);
+        this.loadDefaults();
+        this.load();
+    }
 
     public BotConfig(@NotNull Document config) {
         this.file = config;
@@ -52,22 +60,27 @@ public class BotConfig {
         return defaults.get(key);
     }
 
+    @Override
     public List<Long> getOwners() {
         return file.getList("owner", long.class, new ArrayList<>());
     }
 
+    @Override
     public LogLevel getLogLevel() {
         return LogLevel.byName(file.getString("log-level"));
     }
 
+    @Override
     public String getToken() {
         return file.getString("token");
     }
 
+    @Override
     public int getShards() {
         return file.getInt("shards");
     }
 
+    @Override
     public OnlineStatus getOnlineStatus() {
         return OnlineStatus.fromKey(file.getString("online-status"));
     }
