@@ -62,7 +62,7 @@ waiter.waitFor(MessageReceivedEvent.class)
     .build();
 ```
 
-You can find a basic implementation here: [BotExample.java](src/main/example/BotExample.java).
+You can find a basic implementation here: [BotExample.java](src/example/BotExample.java).
 
 ## BotBuilder
 
@@ -91,7 +91,7 @@ You will also need a json config file for your bot token, online status, and oth
 BotConfig botConfig = new BotConfig(new File("config.json"));
 ```
 If you need other custom configuration options you may create your own config class that extends `BotConfig`. <br>
-You can find an example here: [ExtendedBotConfig.java](src/main/example/ExtendedBotConfig.java).
+You can find an example here: [ExtendedBotConfig.java](src/example/ExtendedBotConfig.java).
 
 Then create a `BotBuilder` to register a command manager and listeners:
 ```java
@@ -122,17 +122,17 @@ Finally, create your bot instance:
 new BotExample(botConfig, builder);
 ```
 
-You can find a basic implementation here: [BotExample.java](src/main/example/BotExample.java).
+You can find a basic implementation here: [BotExample.java](src/example/BotExample.java).
 
 ## CommandTree
 
 The `CommandTree` builder provides a fluent API to register slash/prefix commands programmatically. In the examples you'll find:
 
-You can find a basic implementation here: [BotExample.java](src/main/example/BotExample.java).
+You can find a basic implementation here: [BotExample.java](src/example/BotExample.java).
 
 ## Annotation-based commands
 
-You can find a basic implementation here: [AnnotationCommandExample.java](src/main/example/AnnotationCommandExample.java).
+You can find a basic implementation here: [AnnotationCommandExample.java](src/example/AnnotationCommandExample.java).
 
 ## Java Version
 This library requires Java 11 or newer.
