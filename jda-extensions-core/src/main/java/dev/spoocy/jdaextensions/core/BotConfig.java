@@ -3,7 +3,7 @@ package dev.spoocy.jdaextensions.core;
 import dev.spoocy.utils.common.collections.Collector;
 import dev.spoocy.utils.common.log.LogLevel;
 import dev.spoocy.utils.config.Document;
-import dev.spoocy.utils.config.documents.JsonConfig;
+import dev.spoocy.utils.config.types.JsonConfig;
 import net.dv8tion.jda.api.OnlineStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

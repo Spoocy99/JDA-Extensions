@@ -45,6 +45,7 @@ The following library versions are created with the respective JDA versions:
 |--------------|-------|
 | 1.0.0        | 6.1.0 |
 | 1.0.1        | 6.3.1 |
+| 1.0.2        | 6.3.1 |
 
 ---
 

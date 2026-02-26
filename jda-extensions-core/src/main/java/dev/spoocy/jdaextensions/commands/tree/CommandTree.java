@@ -1,13 +1,10 @@
 package dev.spoocy.jdaextensions.commands.tree;
 
-import com.google.common.collect.ImmutableSet;
 import dev.spoocy.jdaextensions.commands.manager.CommandManager;
 import dev.spoocy.jdaextensions.commands.structure.DiscordCommand;
 import dev.spoocy.jdaextensions.commands.structure.impl.CommandData;
-import dev.spoocy.jdaextensions.core.DiscordBot;
 import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
-import org.checkerframework.checker.units.qual.N;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -40,7 +37,7 @@ public class CommandTree extends AbstractCommandTree<CommandTree> implements Gro
     }
 
     public CommandTree withContext(@NotNull InteractionContextType... context) {
-        this.context = ImmutableSet.copyOf(context);
+        this.context = Set.of(context);
         return this;
     }
 

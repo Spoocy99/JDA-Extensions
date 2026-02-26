@@ -6,7 +6,7 @@
 
     <groupId>dev.spoocy</groupId>
     <artifactId>jda-extensions</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0.2</version>
     <packaging>pom</packaging>
 
     <licenses>
@@ -75,25 +75,25 @@
         <dependency>
             <groupId>dev.spoocy.utils</groupId>
             <artifactId>common-utils</artifactId>
-            <version>1.0.9</version>
+            <version>1.0.12</version>
         </dependency>
 
         <dependency>
             <groupId>dev.spoocy.utils</groupId>
             <artifactId>config-utils</artifactId>
-            <version>1.0.9</version>
+            <version>1.0.12</version>
         </dependency>
 
         <dependency>
             <groupId>dev.spoocy.utils</groupId>
             <artifactId>reflection-utils</artifactId>
-            <version>1.0.9</version>
+            <version>1.0.12</version>
         </dependency>
 
         <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
-            <version>6.3.0</version>
+            <version>6.3.1</version>
 
             <exclusions>
                 <exclusion>
