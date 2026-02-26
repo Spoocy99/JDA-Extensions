@@ -34,7 +34,7 @@ class CommandTreeDslTest {
             executes { /* Command execution logic */ }
 
             sub("sub", "A subcommand")  {
-                executes { /* Subcommand execution logic */ }
+                executes {/* Subcommand execution logic */ }
             }
 
             group("group", "A command group") {

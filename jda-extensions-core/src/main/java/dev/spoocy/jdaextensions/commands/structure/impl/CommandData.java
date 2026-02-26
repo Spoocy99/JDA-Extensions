@@ -1,6 +1,5 @@
 package dev.spoocy.jdaextensions.commands.structure.impl;
 
-import com.google.common.collect.ImmutableSet;
 import dev.spoocy.jdaextensions.commands.arguments.impl.AbstractArgument;
 import dev.spoocy.jdaextensions.commands.structure.CommandNode;
 import dev.spoocy.jdaextensions.commands.structure.CommandNodeHolder;
@@ -39,10 +38,7 @@ public class CommandData extends AbstractCommandNodeHolder implements DiscordCom
             @NotNull DefaultMemberPermissions defaultPermissions,
             @NotNull InteractionContextType... context
     ) {
-        super(name, description);
-        this.nsfw = nsfw;
-        this.defaultPermissions = defaultPermissions;
-        this.context = ImmutableSet.copyOf(context);
+        this(name, description, nsfw, defaultPermissions, Set.of(context));
     }
 
     public CommandData(
@@ -55,7 +51,7 @@ public class CommandData extends AbstractCommandNodeHolder implements DiscordCom
         super(name, description);
         this.nsfw = nsfw;
         this.defaultPermissions = defaultPermissions;
-        this.context = ImmutableSet.copyOf(context);
+        this.context = Set.copyOf(context);
     }
 
     public void setRootCommand(@Nullable CommandNodeData rootCommand) {

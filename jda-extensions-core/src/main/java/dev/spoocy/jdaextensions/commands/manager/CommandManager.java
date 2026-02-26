@@ -72,8 +72,7 @@ public interface CommandManager {
     /**
      * Gets a registered command by its name.
      *
-     * @param name
-     *        the name of the command.
+     * @param name the name of the command.
      *
      * @return the command instance, or null if not found.
      */
@@ -83,54 +82,43 @@ public interface CommandManager {
     /**
      * Adds multiple commands to the manager.
      *
-     * @param command
-     *        the commands to add.
+     * @param command the commands to add.
      */
-    void register(@NotNull DiscordCommand... command);
+    void register(@NotNull DiscordCommand command);
 
     /**
      * Adds multiple commands to the manager.
      *
-     * @param command
-     *        the commands to add.
+     * @param command the commands to add.
      */
     void register(@NotNull Collection<DiscordCommand> command);
 
     /**
-     * Scans and registers commands from the given annotated class.
+     * Scans and registers a command from the given entity.
      * <br>
-     * This class should be annotated with {@link dev.spoocy.jdaextensions.commands.annotations.Command}
-     * and have static methods annotated with {@link dev.spoocy.jdaextensions.commands.annotations.Command.Default}
+     * Classes should be annotated with {@link dev.spoocy.jdaextensions.commands.annotations.Command}
+     * and have instance methods annotated with {@link dev.spoocy.jdaextensions.commands.annotations.Command.Default}
      * and {@link dev.spoocy.jdaextensions.commands.annotations.Command.Sub}.
      *
-     * @param annotatedClass
-     *        the class to scan for commands.
-     *
-     * @throws IllegalArgumentException
-     *         if the class is not properly annotated or contains invalid command methods.
+     * @param annotatedEntity the classes or instances to scan for commands.
      */
-    void registerClasses(@NotNull Class<?>... annotatedClass);
+    void addCommand(@NotNull Object annotatedEntity);
 
     /**
-     * Scans and registers commands from the given collection of annotated classes.
+     * Scans and registers a command from the given annotated classes.
      * <br>
-     * Each class should be annotated with {@link dev.spoocy.jdaextensions.commands.annotations.Command}
+     * Classes should be annotated with {@link dev.spoocy.jdaextensions.commands.annotations.Command}
      * and have static methods annotated with {@link dev.spoocy.jdaextensions.commands.annotations.Command.Default}
      * and {@link dev.spoocy.jdaextensions.commands.annotations.Command.Sub}.
      *
-     * @param annotatedClasses
-     *        the collection of classes to scan for commands.
-     *
-     * @throws IllegalArgumentException
-     *         if any class is not properly annotated or contains invalid command methods.
+     * @param annotatedClasses the collection of classes to scan for commands.
      */
-    void registerClasses(@NotNull Collection<Class<?>> annotatedClasses);
+    void addCommand(@NotNull Class<?> annotatedClasses);
 
     /**
      * Removes a command from the manager by its name.
      *
-     * @param name
-     *        the name of the command to remove.
+     * @param name the name of the command to remove.
      *
      * @return the current command manager instance for chaining.
      */
@@ -141,8 +129,7 @@ public interface CommandManager {
      * Updates the commands in the given JDA instance.
      * This will commit all registered commands to Discord.
      *
-     * @param jda
-     *        the JDA instance to update commands for.
+     * @param jda the JDA instance to update commands for.
      *
      * @see JDA#updateCommands()
      */
@@ -151,8 +138,7 @@ public interface CommandManager {
     /**
      * Handles a slash command interaction event.
      *
-     * @param event
-     *        the slash command interaction event to handle.
+     * @param event the slash command interaction event to handle.
      */
     @ApiStatus.Internal
     void handleCommand(@NotNull SlashCommandInteractionEvent event);
@@ -161,8 +147,7 @@ public interface CommandManager {
      * Executes a command if the message received event
      * would trigger a prefix command.
      *
-     * @param event
-     *        the message received event to handle.
+     * @param event the message received event to handle.
      */
     @ApiStatus.Internal
     void handlePrefixCommand(@NotNull MessageReceivedEvent event);

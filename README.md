@@ -9,7 +9,7 @@ It contains a small set of helpers:
 - Helper classes to configure and run JDA-based bots.
 - Command Manager for slash and prefix commands.
 - CommandTree and annotation-based command registration.
-- EventWaiter utility to wait for specific events (like message replies or reactions).
+- EventWaiter.
 
 ## Download
 
@@ -24,7 +24,14 @@ It contains a small set of helpers:
 ```xml
 <dependency>
     <groupId>dev.spoocy</groupId>
-    <artifactId>jda-extensions</artifactId>
+    <artifactId>jda-extensions-core</artifactId>
+    <version>VERSION</version>
+</dependency>
+
+<!-- additional Kotlin extensions -->
+<dependency>
+    <groupId>dev.spoocy</groupId>
+    <artifactId>jda-extensions-kotlin</artifactId>
     <version>VERSION</version>
 </dependency>
 ```
@@ -37,6 +44,7 @@ The following library versions are created with the respective JDA versions:
 | jda-extended | JDA   |
 |--------------|-------|
 | 1.0.0        | 6.1.0 |
+| 1.0.1        | 6.3.1 |
 
 ---
 
@@ -62,7 +70,7 @@ waiter.waitFor(MessageReceivedEvent.class)
     .build();
 ```
 
-You can find a basic implementation here: [BotExample.java](src/example/BotExample.java).
+You can find a basic implementation here: [dev.spoocy.BotExample.java](src/example/dev.spoocy.BotExample.java).
 
 ## BotBuilder
 
@@ -71,12 +79,12 @@ The library provides a `BotBuilder` and  `BotConfig` that make it easier to conf
 Your main bot class should extend `DiscordBot`:
 
 ```java
-public class BotExample extends DiscordBot<BotConfig> {
+public class dev.spoocy.BotExample extends DiscordBot<BotConfig> {
     
     // we use BotConfig as our Settings but you can also create your own class that implements BotSettings
     // or extend the BotConfig class. See below.
 
-    public BotExample(@NotNull BotConfig config, @NotNull BotBuilder builder) {
+    public dev.spoocy.BotExample(@NotNull BotConfig config, @NotNull BotBuilder builder) {
         super(config, builder);
         ...
     }
@@ -91,7 +99,7 @@ You will also need a json config file for your bot token, online status, and oth
 BotConfig botConfig = new BotConfig(new File("config.json"));
 ```
 If you need other custom configuration options you may create your own config class that extends `BotConfig`. <br>
-You can find an example here: [ExtendedBotConfig.java](src/example/ExtendedBotConfig.java).
+You can find an example here: [dev.spoocy.ExtendedBotConfig.java](examples/src/main/java/dev/spoocy/ExtendedBotConfig.java).
 
 Then create a `BotBuilder` to register a command manager and listeners:
 ```java
@@ -111,28 +119,28 @@ BotBuilder builder = new BotBuilder()
                         )
                         
                         // Register Annotation based command
-                        .register(AnnotationCommandExample.class)
+                        .register(dev.dev.spoocy.AnnotationCommandExample.class)
                         .build()
         )
-        .addListener(new ListenerExample());
+        .addListener(new dev.spoocy.ListenerExample());
 ```
 
 Finally, create your bot instance:
 ```java
-new BotExample(botConfig, builder);
+new dev.spoocy.BotExample(botConfig, builder);
 ```
 
-You can find a basic implementation here: [BotExample.java](src/example/BotExample.java).
+You can find a basic implementation here: [dev.spoocy.BotExample.java](examples/src/main/java/dev/spoocy/BotExample.java).
 
 ## CommandTree
 
 The `CommandTree` builder provides a fluent API to register slash/prefix commands programmatically. In the examples you'll find:
 
-You can find a basic implementation here: [BotExample.java](src/example/BotExample.java).
+You can find a basic implementation here: [dev.spoocy.BotExample.java](examples/src/main/java/dev/spoocy/BotExample.java).
 
 ## Annotation-based commands
 
-You can find a basic implementation here: [AnnotationCommandExample.java](src/example/AnnotationCommandExample.java).
+You can find a basic implementation here: [dev.dev.spoocy.AnnotationCommandExample.java](examples/src/main/java/dev/spoocy/AnnotationCommandExample.java).
 
 ## Java Version
 This library requires Java 11 or newer.

@@ -17,7 +17,7 @@ public class BooleanArgument extends AbstractArgument {
             boolean required,
             boolean autoComplete
     ) {
-        super(Boolean.class, name, description, required, autoComplete);
+        super(name, description, required, autoComplete);
     }
 
     @Override
@@ -27,10 +27,6 @@ public class BooleanArgument extends AbstractArgument {
 
     @Override
     protected void apply(@NotNull OptionData optionData) {
-    }
 
-    @Override
-    protected @NotNull Object parseValue(@NotNull Class<?> expected, @NotNull ProvidedArgument arg) {
-        return arg.getAsBoolean();
     }
 }

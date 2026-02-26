@@ -7,17 +7,14 @@ import dev.spoocy.jdaextensions.commands.arguments.impl.AbstractArgument
 import dev.spoocy.jdaextensions.commands.cooldown.CooldownScope
 import dev.spoocy.jdaextensions.commands.event.CommandContext
 import dev.spoocy.jdaextensions.commands.manager.impl.DefaultCommandAnnotationProcessor
-import dev.spoocy.jdaextensions.commands.manager.impl.KotlinAnnotationProcessor
 import dev.spoocy.jdaextensions.commands.structure.impl.CommandData
 import dev.spoocy.jdaextensions.commands.structure.impl.CommandNodeData
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.interactions.InteractionContextType
-import net.dv8tion.jda.api.interactions.commands.OptionType
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @Command(name = "ktcmd", description = "A kotlin-like command", nsfw = false,
@@ -56,31 +53,12 @@ object ObjectLikeSubcommandContainer {
 
 class KotlinAnnotationProcessorTest {
 
-    @Test
-    fun defaultMethodsExist() {
-        val proc = KotlinAnnotationProcessor()
-        val defaultMethod = proc.getDefaultMethod(ObjectLikeSimple::class.java)
-        assertNotNull(defaultMethod)
-
-        val defaultMethod2 = proc.getDefaultMethod(ObjectLikeSubcommandContainer::class.java)
-        assertNull(defaultMethod2)
-    }
-
-    @Test
-    fun subcommandMethodsExist() {
-        val proc = KotlinAnnotationProcessor()
-        val subcommandMethods = proc.getSubCommandMethods(ObjectLikeSimple::class.java)
-        assertNotNull(subcommandMethods)
-        assertEquals(0, subcommandMethods.size)
-
-        val subcommandMethods2 = proc.getSubCommandMethods(ObjectLikeSubcommandContainer::class.java)
-        assertNotNull(subcommandMethods2)
-        assertEquals(2, subcommandMethods2.size)
-    }
+    val proc: DefaultCommandAnnotationProcessor = DefaultCommandAnnotationProcessor.builder()
+        .setKotlin(true)
+        .build()
 
     @Test
     fun testParseDefaultCommand() {
-        val proc = KotlinAnnotationProcessor()
         val data: CommandData = proc.parseCommand(ObjectLikeSimple::class.java)
 
         assertNotNull(data)
@@ -106,7 +84,6 @@ class KotlinAnnotationProcessorTest {
 
     @Test
     fun testParseSubcommandsAndGroups() {
-        val proc = KotlinAnnotationProcessor()
         val data: CommandData = proc.parseCommand(ObjectLikeSubcommandContainer::class.java)
 
         assertNotNull(data)

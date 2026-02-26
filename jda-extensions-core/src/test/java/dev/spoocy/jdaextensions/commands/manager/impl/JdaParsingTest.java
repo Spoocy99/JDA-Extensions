@@ -45,7 +45,7 @@ public class JdaParsingTest {
 
     @Test
     void testJdaConversionWithAnnotations() {
-        CommandData data = DefaultCommandAnnotationProcessor.INSTANCE.parseCommand(SubcommandContainerFixture.class);
+        CommandData data = DefaultCommandAnnotationProcessor.DEFAULT.parseCommand(SubcommandContainerFixture.class);
         assertNotNull(data);
 
         var jdaData = data.buildJDA();

@@ -94,31 +94,28 @@ public class DefaultCommandManager implements CommandManager {
     }
 
     @Override
-    public void register(@NotNull DiscordCommand... command) {
-        this.register(Arrays.asList(command));
+    public void register(@NotNull DiscordCommand command) {
+        CommandData data = (CommandData) command;
+        this.commandMap.put(data.name(), data);
+        LOGGER.debug("Registered command '{}' ({} Commands)", data.name(), this.commandMap.size());
     }
 
     @Override
     public void register(@NotNull Collection<DiscordCommand> command) {
-        for (DiscordCommand c : command) {
-            CommandData data = (CommandData) c;
-            this.commandMap.put(data.name(), data);
-            LOGGER.debug("Registered command '{}' ({} Commands)", data.name(), this.commandMap.size());
+        for (DiscordCommand cmd : command) {
+            this.register(cmd);
         }
     }
 
     @Override
-    public void registerClasses(@NotNull Class<?>... annotatedClass) {
-        this.registerClasses(Arrays.asList(annotatedClass));
+    public void addCommand(@NotNull Object annotatedEntity) {
+        this.register(this.annotationProcessor.parseCommand(annotatedEntity));
+
     }
 
     @Override
-    public void registerClasses(@NotNull Collection<Class<?>> annotatedClasses) {
-        this.register(
-                Collector.of(annotatedClasses)
-                        .map(this.annotationProcessor::parseCommand)
-                        .asList(DiscordCommand.class)
-        );
+    public void addCommand(@NotNull Class<?> annotatedClasses) {
+        this.register(this.annotationProcessor.parseCommand(annotatedClasses));
     }
 
     @Override
@@ -139,7 +136,8 @@ public class DefaultCommandManager implements CommandManager {
 
             if (guild == null) {
                 LOGGER.warn("Testing guild with ID {} not found on shard {}. Skipping command commit...",
-                        this.testingGuildId, jda.getShardInfo().getShardId());
+                        this.testingGuildId, jda.getShardInfo()
+                                .getShardId());
                 return;
             }
 
@@ -161,7 +159,8 @@ public class DefaultCommandManager implements CommandManager {
         }
 
         commands.queue();
-        LOGGER.info("Commited {} commands on shard {}", count, jda.getShardInfo().getShardId());
+        LOGGER.info("Commited {} commands on shard {}", count, jda.getShardInfo()
+                .getShardId());
     }
 
     private void handleCommandPreProcess(@NotNull CommandPreProcessContext context) {
@@ -180,13 +179,28 @@ public class DefaultCommandManager implements CommandManager {
     }
 
     private void handleNoPermissions(@NotNull CommandContext context) {
+        ensureAcknowledged(context);
         Scheduler.runAsync(() -> this.listener.onNoPermissions(context))
-                .onException(e -> this.listener.onException(context, e));
+                .onException(e -> LOGGER.error("Exception in no permissions handler.", e));
     }
 
     private void handleCooldown(@NotNull CommandContext context) {
+        ensureAcknowledged(context);
         Scheduler.runAsync(() -> this.listener.onCooldown(context))
-                .onException(e -> this.listener.onException(context, e));
+                .onException(e -> LOGGER.error("Exception in cooldown handler.", e));
+    }
+
+    private void handleException(@NotNull CommandContext context, @NotNull Throwable throwable) {
+        ensureAcknowledged(context);
+        Scheduler.runAsync(() -> this.listener.onException(context, throwable))
+                .onException(e -> LOGGER.error("Exception in exception handler.", e));
+    }
+
+    private void ensureAcknowledged(@NotNull CommandContext context) {
+        if (context.isInteraction() && !context.isAcknowledged()) {
+            LOGGER.debug("Acknowledging interaction for context {} to send response messages.", context);
+            context.acknowledge(false);
+        }
     }
 
     @Override
@@ -207,12 +221,13 @@ public class DefaultCommandManager implements CommandManager {
             return;
         }
 
-        if (data.acknowledge()) {
-            event.deferReply(data.ephemeral())
-                    .queue();
+        CommandContext context = new SlashCommandContext(this, event);
+
+        if(data.acknowledge()) {
+            LOGGER.debug("Acknowledging interaction for command '{}'.", data.name());
+            context.acknowledge(data.ephemeral());
         }
 
-        CommandContext context = new SlashCommandContext(this, event);
         executeContext(CommandData.extract(data), data, context);
     }
 
@@ -244,7 +259,7 @@ public class DefaultCommandManager implements CommandManager {
 
             return (CommandNodeData) holder.getNode(subCommandName);
 
-        } catch (IllegalStateException e)  {
+        } catch (IllegalStateException e) {
             // This occurs when the command has no root but root was called
             return null;
 
@@ -282,11 +297,19 @@ public class DefaultCommandManager implements CommandManager {
 
         if (subCommand.hasCooldown() && !subCommand.cooldown()
                 .shouldExecute(context)) {
+
+            if (!subCommand.acknowledge()) {
+                LOGGER.warn("Non-acknowledged command '{}' has cooldown scope specified!");
+            }
+
+            LOGGER.debug("Command '{}' is on cooldown for user {}.", subCommand.name(), context.getUser()
+                    .getAsTag());
             this.handleCooldown(context);
             return;
         }
 
         if (subCommand.sendTyping()) {
+            LOGGER.debug("Sending typing for command '{}'", subCommand.name());
             context.getChannel()
                     .sendTyping()
                     .queue();
@@ -294,15 +317,16 @@ public class DefaultCommandManager implements CommandManager {
 
         // Execute Command async
         if (subCommand.async()) {
+            LOGGER.debug("Executing command '{}' asynchronously", subCommand.name());
             subCommand.executeAsync(context)
-                    .onException(e -> this.listener.onException(context, e));
+                    .onException(e -> this.handleException(context, e));
             return;
         }
 
+        LOGGER.debug("Executing command '{}' synchronously", subCommand.name());
         // Execute Command sync
         subCommand.execute(context)
-                .onException(e -> this.listener.onException(context, e));
-
+                .onException(e -> this.handleException(context, e));
     }
 
     public static Builder builder() {
@@ -311,12 +335,14 @@ public class DefaultCommandManager implements CommandManager {
 
     public static class Builder {
 
-        private CommandListener listener = new CommandListener() {};
-        private CommandAnnotationProcessor annotationProcessor = DefaultCommandAnnotationProcessor.INSTANCE;
+        private CommandListener listener = new CommandListener() {
+        };
+        private CommandAnnotationProcessor annotationProcessor = DefaultCommandAnnotationProcessor.DEFAULT;
         private Long testingGuildId = null;
         private boolean useSlashCommands = true;
         private String messagePrefix = null;
         private final List<DiscordCommand> commands = new ArrayList<>();
+        private final List<Object> annotatedInstances = new ArrayList<>();
         private final List<Class<?>> commandAnnotationClasses = new ArrayList<>();
 
         public Builder() {
@@ -353,7 +379,12 @@ public class DefaultCommandManager implements CommandManager {
             return this;
         }
 
-        public Builder register(@NotNull Class<?>... annotatedClass) {
+        public Builder registerCommand(@NotNull Object... instance) {
+            this.annotatedInstances.addAll(Arrays.asList(instance));
+            return this;
+        }
+
+        public Builder registerCommand(@NotNull Class<?>... annotatedClass) {
             this.commandAnnotationClasses.addAll(Arrays.asList(annotatedClass));
             return this;
         }
@@ -368,7 +399,8 @@ public class DefaultCommandManager implements CommandManager {
             );
 
             manager.register(this.commands);
-            manager.registerClasses(this.commandAnnotationClasses);
+            this.annotatedInstances.forEach(manager::addCommand);
+            this.commandAnnotationClasses.forEach(manager::addCommand);
             return manager;
         }
 

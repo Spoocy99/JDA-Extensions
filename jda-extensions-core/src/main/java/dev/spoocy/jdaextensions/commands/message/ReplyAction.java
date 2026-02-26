@@ -7,7 +7,9 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.requests.RestAction;
 import net.dv8tion.jda.api.utils.FileUpload;
+import net.dv8tion.jda.api.utils.messages.MessageCreateRequest;
 import net.dv8tion.jda.api.utils.messages.MessagePollData;
+import net.dv8tion.jda.api.utils.messages.MessageRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +23,7 @@ import java.util.function.BooleanSupplier;
  * @author Spoocy99 | GitHub: Spoocy99
  */
 
-public interface ReplyAction extends RestAction<Message> {
+public interface ReplyAction extends RestAction<Message>, MessageCreateRequest<ReplyAction> {
 
     @NotNull
     @Override

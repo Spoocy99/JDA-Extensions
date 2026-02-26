@@ -63,12 +63,20 @@ public interface MessageReply {
     /**
      * @see IReplyCallback#replyComponents(Collection)
      */
-    ReplyAction replyComponents(@NotNull Collection<? extends MessageTopLevelComponent> components);
+    ReplyAction replyComponents(boolean v2, @NotNull Collection<? extends MessageTopLevelComponent> components);
+
+    default ReplyAction replyComponents(@NotNull Collection<? extends MessageTopLevelComponent> components) {
+        return replyComponents(true, components);
+    }
 
     /**
      * @see IReplyCallback#replyComponents(MessageTopLevelComponent, MessageTopLevelComponent...)
      */
-    ReplyAction replyComponents(@NotNull MessageTopLevelComponent component, @NotNull MessageTopLevelComponent... other);
+    ReplyAction replyComponents(boolean v2, @NotNull MessageTopLevelComponent component, @NotNull MessageTopLevelComponent... other);
+
+    default ReplyAction replyComponents(@NotNull MessageTopLevelComponent component, @NotNull MessageTopLevelComponent... other) {
+        return replyComponents(true, component, other);
+    }
 
     /**
      * @see IReplyCallback#replyComponents(ComponentTree)

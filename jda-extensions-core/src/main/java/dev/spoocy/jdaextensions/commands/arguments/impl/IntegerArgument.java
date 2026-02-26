@@ -26,17 +26,7 @@ public class IntegerArgument extends AbstractArgument {
             boolean required,
             boolean autoComplete
     ) {
-        this(Long.class, name, description, required, autoComplete);
-    }
-
-    public IntegerArgument(
-            @NotNull Class<?> type,
-            @NotNull String name,
-            @NotNull String description,
-            boolean required,
-            boolean autoComplete
-    ) {
-        super(type, name, description, required, autoComplete);
+        super(name, description, required, autoComplete);
     }
 
     @Override
@@ -75,13 +65,5 @@ public class IntegerArgument extends AbstractArgument {
         if (!this.choices.isEmpty()) {
             optionData.addChoices(this.choices);
         }
-    }
-
-    @Override
-    protected @NotNull Object parseValue(@NotNull Class<?> expected, @NotNull ProvidedArgument arg) {
-        if (expected.equals(Integer.class)) {
-            return arg.getAsInt();
-        }
-        return arg.getAsLong();
     }
 }

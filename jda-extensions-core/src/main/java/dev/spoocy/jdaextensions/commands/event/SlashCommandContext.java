@@ -176,18 +176,32 @@ public class SlashCommandContext extends AbstractCommandContext {
     }
 
     @Override
-    public ReplyAction replyComponents(@NotNull Collection<? extends MessageTopLevelComponent> components) {
-        return wrap(this.event.getHook().sendMessage(new MessageCreateBuilder().addComponents(components).build()));
+    public boolean isAcknowledged() {
+        return this.event.isAcknowledged();
     }
 
     @Override
-    public ReplyAction replyComponents(@NotNull MessageTopLevelComponent component, @NotNull MessageTopLevelComponent... other) {
-        return wrap(this.event.getHook().sendMessage(new MessageCreateBuilder().addComponents(component).addComponents(other).build()));
+    public void acknowledge(boolean ephemeral) {
+        this.event.deferReply(ephemeral).queue();
+    }
+
+    @Override
+    public ReplyAction replyComponents(boolean v2, @NotNull Collection<? extends MessageTopLevelComponent> components) {
+        return wrap(this.event.getHook().sendMessage(new MessageCreateBuilder().addComponents(components).useComponentsV2(v2).build()));
+    }
+
+    @Override
+    public ReplyAction replyComponents(
+            boolean v2,
+            @NotNull MessageTopLevelComponent component,
+            @NotNull MessageTopLevelComponent... other
+    ) {
+        return wrap(this.event.getHook().sendMessage(new MessageCreateBuilder().addComponents(component).addComponents(other).useComponentsV2(v2).build()));
     }
 
     @Override
     public ReplyAction replyComponents(@NotNull ComponentTree<? extends MessageTopLevelComponent> tree) {
-        return wrap(this.event.getHook().sendMessage(new MessageCreateBuilder().addComponents(tree).build()));
+        return wrap(this.event.getHook().sendMessage(new MessageCreateBuilder().addComponents(tree).useComponentsV2().build()));
     }
 
     @Override

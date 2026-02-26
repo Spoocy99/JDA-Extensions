@@ -1,18 +1,12 @@
 package dev.spoocy.jdaextensions.commands.arguments;
 
-import dev.spoocy.jdaextensions.commands.annotations.Choice;
 import dev.spoocy.jdaextensions.commands.arguments.impl.*;
-import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
-import java.util.List;
+import java.lang.annotation.*;
+import java.util.Set;
 
 /**
  * @author Spoocy99 | GitHub: Spoocy99
@@ -76,6 +70,18 @@ public enum Arguments {
         return this.argumentClass;
     }
 
+    public static final Set<Class<? extends Annotation>> ARGUMENT_ANNOTATIONS = Set.of(
+            Text.class,
+            Integer.class,
+            Bool.class,
+            User.class,
+            Channel.class,
+            Role.class,
+            Mentionable.class,
+            Number.class,
+            Attachment.class
+    );
+
     /**
      * Creates a new {@link StringArgument}.
      * <br> Useful for creating arguments in the {@link dev.spoocy.jdaextensions.commands.tree.CommandTree}.
@@ -100,6 +106,10 @@ public enum Arguments {
      */
     public static StringArgument string(@NotNull String name, @NotNull String description, boolean required, boolean autoComplete) {
         return new StringArgument(name, description, required, autoComplete);
+    }
+
+    public static StringArgument string(@NotNull String name, @NotNull String description, boolean required) {
+        return string(name, description, required, false);
     }
 
     /**
@@ -128,6 +138,10 @@ public enum Arguments {
         return new IntegerArgument(name, description, required, autoComplete);
     }
 
+    public static IntegerArgument integer(@NotNull String name, @NotNull String description, boolean required) {
+        return integer(name, description, required, false);
+    }
+
     /**
      * Creates a new {@link BooleanArgument}.
      * <br> Useful for creating arguments in the {@link dev.spoocy.jdaextensions.commands.tree.CommandTree}.
@@ -150,6 +164,10 @@ public enum Arguments {
      */
     public static BooleanArgument bool(@NotNull String name, @NotNull String description, boolean required, boolean autoComplete) {
         return new BooleanArgument(name, description, required, autoComplete);
+    }
+
+    public static BooleanArgument bool(@NotNull String name, @NotNull String description, boolean required) {
+        return bool(name, description, required, false);
     }
 
     /**
@@ -176,6 +194,10 @@ public enum Arguments {
         return new UserArgument(name, description, required, autoComplete);
     }
 
+    public static UserArgument user(@NotNull String name, @NotNull String description, boolean required) {
+        return user(name, description, required, false);
+    }
+
     /**
      * Creates a new {@link ChannelArgument}.
      * <br> Useful for creating arguments in the {@link dev.spoocy.jdaextensions.commands.tree.CommandTree}.
@@ -191,7 +213,7 @@ public enum Arguments {
      *
      * @return the created ChannelArgument instance
      *
-     * @see ChannelArgument#type(ChannelType...)
+     * @see ChannelArgument#types(ChannelType...)
      * @see ProvidedArgument#getAsChannel()
      *
      * @see net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent
@@ -199,6 +221,10 @@ public enum Arguments {
      */
     public static ChannelArgument channel(@NotNull String name, @NotNull String description, boolean required, boolean autoComplete) {
         return new ChannelArgument(name, description, required, autoComplete);
+    }
+
+    public static ChannelArgument channel(@NotNull String name, @NotNull String description, boolean required) {
+        return channel(name, description, required, false);
     }
 
     /**
@@ -225,6 +251,10 @@ public enum Arguments {
         return new RoleArgument(name, description, required, autoComplete);
     }
 
+    public static RoleArgument role(@NotNull String name, @NotNull String description, boolean required) {
+        return role(name, description, required, false);
+    }
+
     /**
      * Creates a new {@link MentionableArgument}.
      * <br> Useful for creating arguments in the {@link dev.spoocy.jdaextensions.commands.tree.CommandTree}.
@@ -247,6 +277,10 @@ public enum Arguments {
      */
     public static MentionableArgument mentionable(@NotNull String name, @NotNull String description, boolean required, boolean autoComplete) {
         return new MentionableArgument(name, description, required, autoComplete);
+    }
+
+    public static MentionableArgument mentionable(@NotNull String name, @NotNull String description, boolean required) {
+        return mentionable(name, description, required, false);
     }
 
     /**
@@ -276,6 +310,10 @@ public enum Arguments {
         return new NumberArgument(name, description, required, autoComplete);
     }
 
+    public static NumberArgument number(@NotNull String name, @NotNull String description, boolean required) {
+        return number(name, description, required, false);
+    }
+
     /**
      * Creates a new {@link AttachmentArgument}.
      * <br> Useful for creating arguments in the {@link dev.spoocy.jdaextensions.commands.tree.CommandTree}.
@@ -300,14 +338,16 @@ public enum Arguments {
         return new AttachmentArgument(name, description, required, autoComplete);
     }
 
+    public static AttachmentArgument attachment(@NotNull String name, @NotNull String description, boolean required) {
+        return attachment(name, description, required, false);
+    }
+
     /*
      * Annotations for when implementing command arguments via annotations.
      */
 
     /**
      * Annotations for {@link Arguments#STRING}.
-     * <p>
-     * Compatible Type: {@link ProvidedArgument}, {@link String}
      * <p>
      * Example Usage:
      * <pre>
@@ -344,8 +384,6 @@ public enum Arguments {
     /**
      * Annotations for {@link Arguments#INTEGER}.
      * <p>
-     * Compatible Type: {@link ProvidedArgument}, {@link java.lang.Integer}, {@link Long}
-     * <p>
      * Example Usage:
      * <pre>
      * {@code
@@ -381,8 +419,6 @@ public enum Arguments {
     /**
      * Annotations for {@link Arguments#BOOLEAN}.
      * <p>
-     * Compatible Type: {@link ProvidedArgument}, {@link Boolean}
-     * <p>
      * Example Usage:
      * <pre>
      * {@code
@@ -412,8 +448,6 @@ public enum Arguments {
     /**
      * Annotations for {@link Arguments#USER}.
      * <p>
-     * Compatible Type: {@link ProvidedArgument}, {@link net.dv8tion.jda.api.entities.User} or {@link net.dv8tion.jda.api.entities.Member}
-     * <p>
      * Example Usage:
      * <pre>
      * {@code
@@ -442,8 +476,6 @@ public enum Arguments {
 
     /**
      * Annotations for {@link Arguments#CHANNEL}.
-     * <p>
-     * Compatible Type: {@link ProvidedArgument}, {@link net.dv8tion.jda.api.entities.channel.unions.GuildChannelUnion}
      * <p>
      * Example Usage:
      * <pre>
@@ -477,8 +509,6 @@ public enum Arguments {
     /**
      * Annotations for {@link Arguments#ROLE}.
      * <p>
-     * Compatible Type: {@link ProvidedArgument}, {@link net.dv8tion.jda.api.entities.Role}
-     * <p>
      * Example Usage:
      * <pre>
      * {@code
@@ -508,8 +538,6 @@ public enum Arguments {
     /**
      * Annotations for {@link Arguments#MENTIONABLE}.
      * <p>
-     * Compatible Type: {@link ProvidedArgument}, {@link net.dv8tion.jda.api.entities.IMentionable}
-     * <p>
      * Example Usage:
      * <pre>
      * {@code
@@ -538,8 +566,6 @@ public enum Arguments {
 
     /**
      * Annotations for {@link Arguments#NUMBER}.
-     * <p>
-     * Compatible Type: {@link ProvidedArgument}, {@link Double}, {@link Long}
      * <p>
      * Example Usage:
      * <pre>
@@ -575,8 +601,6 @@ public enum Arguments {
 
     /**
      * Annotations for {@link Arguments#ATTACHMENT}.
-     * <p>
-     * Compatible Type: {@link ProvidedArgument}, {@link net.dv8tion.jda.api.entities.Message.Attachment}
      * <p>
      * Example Usage:
      * <pre>

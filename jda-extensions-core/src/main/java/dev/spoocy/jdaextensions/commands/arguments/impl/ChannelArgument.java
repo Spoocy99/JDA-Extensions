@@ -24,17 +24,7 @@ public class ChannelArgument extends AbstractArgument {
             boolean required,
             boolean autoComplete
     ) {
-        this(GuildChannelUnion.class, name, description, required, autoComplete);
-    }
-
-    public ChannelArgument(
-            @NotNull Class<?> type,
-            @NotNull String name,
-            @NotNull String description,
-            boolean required,
-            boolean autoComplete
-    ) {
-        super(type, name, description, required, autoComplete);
+        super(name, description, required, autoComplete);
     }
 
     @Override
@@ -42,15 +32,19 @@ public class ChannelArgument extends AbstractArgument {
         return OptionType.CHANNEL;
     }
 
-    public ChannelArgument type(@NotNull ChannelType channelType) {
-        this.channelTypes.add(channelType);
+    public ChannelArgument types(@NotNull EnumSet<ChannelType> channelTypes) {
+        this.channelTypes.addAll(channelTypes);
         return this;
     }
 
-    public ChannelArgument type(@NotNull ChannelType... channelType) {
-        if (channelType.length == 0) return this;
+    public ChannelArgument types(@NotNull ChannelType channelType, @NotNull ChannelType... others) {
+        this.channelTypes.add(channelType);
+        this.channelTypes.addAll(Arrays.asList(others));
+        return this;
+    }
 
-        this.channelTypes.addAll(Arrays.asList(channelType));
+    public ChannelArgument types(@NotNull ChannelType[] channelTypes) {
+        this.channelTypes.addAll(Arrays.asList(channelTypes));
         return this;
     }
 
@@ -59,13 +53,5 @@ public class ChannelArgument extends AbstractArgument {
         if (!this.channelTypes.isEmpty()) {
             optionData.setChannelTypes(this.channelTypes);
         }
-    }
-
-    @Override
-    protected @NotNull Object parseValue(@NotNull Class<?> expected, @NotNull ProvidedArgument arg) {
-        if (expected.equals(ChannelType.class)) {
-            return arg.getAsChannelType();
-        }
-        return arg.getAsChannel();
     }
 }

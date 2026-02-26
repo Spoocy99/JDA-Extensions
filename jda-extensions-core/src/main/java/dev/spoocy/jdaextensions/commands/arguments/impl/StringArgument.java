@@ -28,17 +28,7 @@ public class StringArgument extends AbstractArgument {
             boolean required,
             boolean autoComplete
     ) {
-        this(String.class, name, description, required, autoComplete);
-    }
-
-    public StringArgument(
-            @NotNull Class<?> type,
-            @NotNull String name,
-            @NotNull String description,
-            boolean required,
-            boolean autoComplete
-    ) {
-        super(type, name, description, required, autoComplete);
+        super(name, description, required, autoComplete);
     }
 
     @Override
@@ -49,6 +39,10 @@ public class StringArgument extends AbstractArgument {
     @Override
     public boolean autoComplete() {
         return super.autoComplete && this.choices.isEmpty();
+    }
+
+    public List<Command.Choice> choices() {
+        return List.copyOf(this.choices);
     }
 
     public StringArgument maxLength(@Nullable Integer maxLength) {
@@ -77,13 +71,5 @@ public class StringArgument extends AbstractArgument {
         if (!this.choices.isEmpty()) {
             optionData.addChoices(this.choices);
         }
-    }
-
-    @Override
-    protected @NotNull Object parseValue(@NotNull Class<?> expected, @NotNull ProvidedArgument arg) {
-        if (expected.equals(Mentions.class)) {
-            return arg.getMentions();
-        }
-        return arg.getAsString();
     }
 }

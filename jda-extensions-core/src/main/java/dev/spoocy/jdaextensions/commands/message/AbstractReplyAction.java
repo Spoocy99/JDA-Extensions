@@ -1,12 +1,22 @@
 package dev.spoocy.jdaextensions.commands.message;
 
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.components.MessageTopLevelComponent;
+import net.dv8tion.jda.api.components.MessageTopLevelComponentUnion;
+import net.dv8tion.jda.api.entities.IMentionable;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.exceptions.RateLimitedException;
 import net.dv8tion.jda.api.requests.RestAction;
+import net.dv8tion.jda.api.utils.FileUpload;
+import net.dv8tion.jda.api.utils.messages.MessagePollData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -18,7 +28,7 @@ import java.util.function.Function;
 
 public abstract class AbstractReplyAction<T extends RestAction<R>, R> implements ReplyAction {
 
-    protected final T action;
+    protected T action;
 
 	public AbstractReplyAction(@NotNull T action) {
 		this.action = action;
@@ -38,7 +48,7 @@ public abstract class AbstractReplyAction<T extends RestAction<R>, R> implements
         return this;
     }
 
-	@NotNull
+    @NotNull
 	@Override
 	public JDA getJDA() {
 		return action.getJDA();

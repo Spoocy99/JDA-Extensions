@@ -35,11 +35,11 @@ public abstract class AbstractCommandContext implements CommandContext, GenericE
     }
 
 	protected ReplyAction wrap(@NotNull MessageCreateAction action) {
-		return new WrappedMessageReplyAction(action);
+		return WrappedMessageReplyAction.wrap(action);
 	}
 
 	protected ReplyAction wrap(@NotNull WebhookMessageCreateAction<Message> action) {
-		return new WrappedWebhookReplyAction(action);
+		return WrappedWebhookReplyAction.wrap(action);
 	}
 
     @Override

@@ -2,7 +2,7 @@ import dev.spoocy.jdaextensions.commands.annotations.Choice
 import dev.spoocy.jdaextensions.commands.annotations.Command
 import dev.spoocy.jdaextensions.commands.arguments.Arguments
 import dev.spoocy.jdaextensions.commands.event.CommandContext
-import dev.spoocy.jdaextensions.commands.manager.impl.KotlinAnnotationProcessor
+import dev.spoocy.jdaextensions.commands.manager.impl.DefaultCommandAnnotationProcessor
 import net.dv8tion.jda.api.interactions.commands.OptionType
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData
@@ -39,9 +39,13 @@ object SubcommandContainerFixture {
 
 class JdaParsingTest {
 
+    val proc: DefaultCommandAnnotationProcessor = DefaultCommandAnnotationProcessor.builder()
+        .setKotlin(true)
+        .build()
+
     @Test
     fun testJdaConversionWithKotlinAnnotations() {
-        val data = KotlinAnnotationProcessor().parseCommand(SubcommandContainerFixture::class.java)
+        val data = proc.parseCommand(SubcommandContainerFixture::class.java)
         assertNotNull(data)
 
         val jdaData = data.buildJDA()

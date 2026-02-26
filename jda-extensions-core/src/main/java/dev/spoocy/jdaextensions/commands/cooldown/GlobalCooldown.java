@@ -1,6 +1,7 @@
 package dev.spoocy.jdaextensions.commands.cooldown;
 
 import dev.spoocy.jdaextensions.commands.event.CommandContext;
+import dev.spoocy.utils.common.log.ILogger;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
@@ -11,8 +12,8 @@ import java.time.Duration;
 
 public class GlobalCooldown implements Cooldown {
 
-    private long cooldown;
     private final Duration duration;
+    private long cooldown;
 
     public GlobalCooldown(@NotNull Duration duration) {
         this.duration = duration;

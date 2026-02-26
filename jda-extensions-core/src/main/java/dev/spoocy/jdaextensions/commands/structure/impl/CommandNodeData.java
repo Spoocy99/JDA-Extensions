@@ -1,6 +1,5 @@
 package dev.spoocy.jdaextensions.commands.structure.impl;
 
-import com.google.common.collect.ImmutableList;
 import dev.spoocy.jdaextensions.commands.arguments.impl.AbstractArgument;
 import dev.spoocy.jdaextensions.commands.cooldown.Cooldown;
 import dev.spoocy.jdaextensions.commands.permission.CommandPermission;
@@ -12,6 +11,7 @@ import dev.spoocy.utils.common.scheduler.task.Task;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -34,7 +34,7 @@ public class CommandNodeData implements CommandNode {
     private final boolean sendTyping;
     private final boolean acknowledge;
     private final boolean ephemeral;
-    private final List<AbstractArgument> arguments;
+    private final AbstractArgument[] arguments;
     private final Cooldown cooldown;
     private final Consumer<CommandContext> executor;
 
@@ -47,7 +47,7 @@ public class CommandNodeData implements CommandNode {
             boolean sendTyping,
             boolean acknowledge,
             boolean ephemeral,
-            @NotNull List<AbstractArgument> arguments,
+            @NotNull AbstractArgument[] arguments,
             @NotNull Cooldown cooldown,
             @NotNull Consumer<CommandContext> executor
     ) {
@@ -67,8 +67,8 @@ public class CommandNodeData implements CommandNode {
         this.async = async;
         this.sendTyping = sendTyping;
         this.acknowledge = acknowledge;
-        this.ephemeral = ephemeral;
-        this.arguments = ImmutableList.copyOf(arguments);
+        this.ephemeral = ephemeral;;
+        this.arguments = Arrays.copyOf(arguments, arguments.length);
         this.cooldown = cooldown;
         this.executor = executor;
 
@@ -116,7 +116,7 @@ public class CommandNodeData implements CommandNode {
 
     @Override
     public @NotNull List<Argument> arguments() {
-        return ImmutableList.copyOf(this.arguments);
+        return List.of(this.arguments);
     }
 
     @Override
@@ -135,7 +135,7 @@ public class CommandNodeData implements CommandNode {
     }
 
     public @NotNull List<AbstractArgument> getArgumentData() {
-        return this.arguments;
+        return List.of(this.arguments);
     }
 
     public SubcommandData buildJDA() {
@@ -158,7 +158,7 @@ public class CommandNodeData implements CommandNode {
                 ", async=" + async +
                 ", sendTyping=" + sendTyping +
                 ", ephemeral=" + ephemeral +
-                ", arguments=" + arguments +
+                ", arguments=" + Arrays.toString(arguments) +
                 ", cooldown=" + cooldown +
                 ", executor=" + executor +
                 '}';

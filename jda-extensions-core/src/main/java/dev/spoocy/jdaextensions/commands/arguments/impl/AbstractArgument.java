@@ -4,6 +4,9 @@ import dev.spoocy.jdaextensions.commands.arguments.Argument;
 import dev.spoocy.jdaextensions.commands.arguments.ProvidedArgument;
 import dev.spoocy.jdaextensions.commands.event.CommandContext;
 import dev.spoocy.utils.common.log.ILogger;
+import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.channel.ChannelType;
+import net.dv8tion.jda.api.entities.channel.unions.GuildChannelUnion;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,21 +19,17 @@ public abstract class AbstractArgument implements Argument {
 
     private static final ILogger LOGGER = ILogger.forThisClass();
 
-    protected final Class<?> expectedValueClass;
     protected final String name;
     protected final String description;
     protected final boolean required;
     protected final boolean autoComplete;
 
     public AbstractArgument(
-            @NotNull Class<?> expectedValueClass,
             @NotNull String name,
-
             @NotNull String description,
             boolean required,
             boolean autoComplete
     ) {
-        this.expectedValueClass = expectedValueClass;
         this.name = name;
         this.description = description;
         this.required = required;
@@ -64,56 +63,97 @@ public abstract class AbstractArgument implements Argument {
         return optionData;
     }
 
-    public Class<?> getValueClass() {
-        return this.expectedValueClass;
-    }
-
+    /**
+     * Extracts the argument value from the provided command context and casts it to the expected type.
+     *
+     * @param <T> the expected type of the argument value
+     * @param context the command context containing the provided arguments
+     * @param expected the expected type of the argument value
+     *
+     * @return the extracted argument value cast to the expected type
+     *
+     * @throws IllegalStateException if the argument is not present in the context
+     * @throws IllegalStateException if the argument type is incompatible with the expected type
+     */
     @Nullable
-    public Object extractValue(@NotNull CommandContext context) {
+    public <T> T extractValue(@NotNull CommandContext context, @NotNull Class<T> expected) {
         ProvidedArgument argument = context.getArgument(this.name);
         if (argument == null) {
             return null;
         }
 
-        Class<?> expected = wrapPrimitive(this.expectedValueClass);
+        try {
 
-        if (expected == ProvidedArgument.class) {
-            return argument;
-        }
+            if (isOfType(expected, ProvidedArgument.class)) {
+                return (T) argument;
+            }
 
-        Object parsedValue = parseValue(expected, argument);
+            if(isOfType(expected, Mentions.class)) {
+                return (T) argument.getMentions();
+            }
 
-        if (!expected.isInstance(parsedValue)) {
-            throw new IllegalStateException(
-                    "Parsed argument value is not of expected type! Expected: "
-                            + expected.getName()
-                            + ", but got: "
-                            + parsedValue.getClass().getName()
-            );
-        }
+            if (isOfType(expected, Message.Attachment.class)) {
+                return (T) argument.getAsAttachment();
+            }
 
-        return parsedValue;
+            if (isOfType(expected, String.class)) {
+                return (T) argument.getAsString();
+            }
+
+            if (isOfType(expected, boolean.class, Boolean.class)) {
+                return (T) Boolean.valueOf(argument.getAsBoolean());
+            }
+
+            if (isOfType(expected, long.class, Long.class)) {
+                return (T) Long.valueOf(argument.getAsLong());
+            }
+
+            if (isOfType(expected, int.class, Integer.class)) {
+                return (T) Integer.valueOf(argument.getAsInt());
+            }
+
+            if (isOfType(expected, double.class, Double.class)) {
+                return (T) Double.valueOf(argument.getAsDouble());
+            }
+
+            if (isOfType(expected, IMentionable.class)) {
+                return (T) argument.getAsMentionable();
+            }
+
+            if (isOfType(expected, Member.class)) {
+                return (T) argument.getAsMember();
+            }
+
+            if (isOfType(expected, User.class)) {
+                return (T) argument.getAsUser();
+            }
+
+            if (isOfType(expected, Role.class)) {
+                return (T) argument.getAsRole();
+            }
+
+            if (isOfType(expected, ChannelType.class)) {
+                return (T) argument.getAsChannelType();
+            }
+
+            if (isOfType(expected, GuildChannelUnion.class)) {
+                return (T) argument.getAsChannel();
+            }
+
+        } catch (IllegalStateException ignored) { }
+
+        throw new IllegalStateException("Incompatible argument type: " + expected.getName() + " --> " + this.type().name());
     }
 
-    private static Class<?> wrapPrimitive(Class<?> cls) {
-        if (cls == null || !cls.isPrimitive()) {
-            return cls;
+    private boolean isOfType(@NotNull Class<?> expected, @NotNull Class<?>... maybe) {
+        for (Class<?> type : maybe) {
+            if (expected.equals(type)) {
+                return true;
+            }
         }
-        if (cls == boolean.class) return Boolean.class;
-        if (cls == byte.class) return Byte.class;
-        if (cls == char.class) return Character.class;
-        if (cls == short.class) return Short.class;
-        if (cls == int.class) return Integer.class;
-        if (cls == long.class) return Long.class;
-        if (cls == float.class) return Float.class;
-        if (cls == double.class) return Double.class;
-        if (cls == void.class) return Void.class;
-        return cls;
+        return false;
     }
 
     protected abstract void apply(@NotNull OptionData optionData);
-
-    @NotNull
-    protected abstract Object parseValue(@NotNull Class<?> expected, @NotNull ProvidedArgument arg);
 
 }

@@ -254,6 +254,7 @@ public interface CommandContext extends MessageReply {
 
     /**
      * Acknowledgement of this interaction with a {@link Modal Modal}.
+     * Automatic acknowledgement for the corresponding command has to be disabled for this to work.
      *
      * <p>This will open a popup on the target user's Discord client.
      *
@@ -275,4 +276,20 @@ public interface CommandContext extends MessageReply {
      */
     @NotNull
     ModalCallbackAction replyModal(@NotNull Modal modal);
+
+    /**
+     * Checks if this CommandContext has already been acknowledged.
+     * Notmally this will always be {@code true}. Only if acknowledging was specifically disabled for the corresponding command,
+     * this can return {@code false}. If so the interaction has to be acknowledged before replying.
+     * <p>
+     * If this context was not triggered by an interaction, this will always return {@code false}.
+     *
+     * @return {@code true} if this CommandContext has been acknowledged, {@code false} otherwise
+     */
+    boolean isAcknowledged();
+
+    /**
+     * Acknowledges this CommandContext if it was triggered by an interaction.
+     */
+    void acknowledge(boolean ephemeral);
 }

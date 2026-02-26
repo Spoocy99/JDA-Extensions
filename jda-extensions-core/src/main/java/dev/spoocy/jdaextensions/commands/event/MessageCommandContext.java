@@ -191,13 +191,27 @@ public class MessageCommandContext extends AbstractCommandContext {
     }
 
     @Override
-    public ReplyAction replyComponents(@NotNull Collection<? extends MessageTopLevelComponent> components) {
-        return wrap(this.event.getMessage().replyComponents(components));
+    public boolean isAcknowledged() {
+        return false;
     }
 
     @Override
-    public ReplyAction replyComponents(@NotNull MessageTopLevelComponent component, @NotNull MessageTopLevelComponent... other) {
-        return wrap(this.event.getMessage().replyComponents(component, other));
+    public void acknowledge(boolean ephemeral) {
+        // no-op
+    }
+
+    @Override
+    public ReplyAction replyComponents(boolean v2, @NotNull Collection<? extends MessageTopLevelComponent> components) {
+        return wrap(this.event.getMessage().replyComponents(components).useComponentsV2(v2));
+    }
+
+    @Override
+    public ReplyAction replyComponents(
+            boolean v2,
+            @NotNull MessageTopLevelComponent component,
+            @NotNull MessageTopLevelComponent... other
+    ) {
+        return wrap(this.event.getMessage().replyComponents(component, other).useComponentsV2(v2));
     }
 
     @Override

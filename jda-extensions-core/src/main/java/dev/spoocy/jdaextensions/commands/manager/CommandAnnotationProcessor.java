@@ -10,11 +10,19 @@ import org.jetbrains.annotations.NotNull;
 public interface CommandAnnotationProcessor {
 
     /**
-     * Parses a class annotated with command annotations into CommandData
+     * Parses a class annotated with command annotations into {@link CommandData}.
      *
      * @param clazz The class to parse
-     * @return The parsed CommandData
+     * @return The parsed CommandData.
      */
     CommandData parseCommand(@NotNull Class<?> clazz);
+
+    /**
+     * Parses an instance of a class annotated with command annotations into {@link CommandData}.
+     *
+     * @param clazz The instance to parse
+     * @return The parsed CommandData.
+     */
+    CommandData parseCommand(@NotNull Object clazz);
 
 }

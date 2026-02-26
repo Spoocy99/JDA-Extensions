@@ -12,12 +12,13 @@ import org.jetbrains.annotations.NotNull;
 
 public class RoleArgument extends AbstractArgument {
 
-    public RoleArgument(@NotNull String name,
-                        @NotNull String description,
-                        boolean required,
-                        boolean autoComplete
+    public RoleArgument(
+            @NotNull String name,
+            @NotNull String description,
+            boolean required,
+            boolean autoComplete
     ) {
-        super(Role.class, name, description, required, autoComplete);
+        super(name, description, required, autoComplete);
     }
 
     @Override
@@ -27,10 +28,5 @@ public class RoleArgument extends AbstractArgument {
 
     @Override
     protected void apply(@NotNull OptionData optionData) {
-    }
-
-    @Override
-    protected @NotNull Object parseValue(@NotNull Class<?> expected, @NotNull ProvidedArgument arg) {
-        return arg.getAsRole();
     }
 }

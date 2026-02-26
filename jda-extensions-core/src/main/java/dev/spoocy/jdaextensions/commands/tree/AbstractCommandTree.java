@@ -33,7 +33,7 @@ public abstract class AbstractCommandTree<Impl extends AbstractCommandTree<Impl>
     protected boolean acknowledge = true;
     protected boolean ephemeral = false;
     protected List<AbstractArgument> arguments = new ArrayList<>();
-    protected CooldownScope cooldown = null;
+    protected CooldownScope cooldown =CooldownScope.NONE;
     protected Duration cooldownDuration = Duration.ZERO;
     protected Consumer<CommandContext> executor;
 
@@ -127,9 +127,6 @@ public abstract class AbstractCommandTree<Impl extends AbstractCommandTree<Impl>
     protected CommandNodeData buildNodeData(@NotNull CommandNodeHolder parent) {
         validate();
 
-        dev.spoocy.jdaextensions.commands.cooldown.Cooldown cooldown =
-                dev.spoocy.jdaextensions.commands.cooldown.Cooldown.NONE;
-
         return new CommandNodeData(
                 parent,
                 this.name,
@@ -139,8 +136,8 @@ public abstract class AbstractCommandTree<Impl extends AbstractCommandTree<Impl>
                 this.sendTyping,
                 this.acknowledge,
                 this.ephemeral,
-                this.arguments,
-                cooldown,
+                this.arguments.toArray(AbstractArgument[]::new),
+                this.cooldown.cooldown(this.cooldownDuration),
                 this.executor
         );
     }
