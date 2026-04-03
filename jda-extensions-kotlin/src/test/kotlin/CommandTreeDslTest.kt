@@ -1,7 +1,7 @@
-import dev.spoocy.jdaextensions.commandTree
+import dev.spoocy.jdaextensions.commands.commandTree
 import dev.spoocy.jdaextensions.commands.structure.impl.CommandData
-import dev.spoocy.jdaextensions.group
-import dev.spoocy.jdaextensions.sub
+import dev.spoocy.jdaextensions.commands.group
+import dev.spoocy.jdaextensions.commands.sub
 import net.dv8tion.jda.api.interactions.InteractionContextType
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData
 import org.junit.jupiter.api.Assertions.assertFalse

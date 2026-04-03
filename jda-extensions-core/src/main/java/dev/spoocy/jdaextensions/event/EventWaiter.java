@@ -8,7 +8,9 @@ import net.dv8tion.jda.api.events.GenericEvent;
 import net.dv8tion.jda.api.events.session.ShutdownEvent;
 import net.dv8tion.jda.api.hooks.EventListener;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
@@ -24,6 +26,7 @@ import java.util.function.Predicate;
 public class EventWaiter implements EventListener {
 
     private static final ILogger LOGGER = ILogger.forThisClass();
+
     private final HashMap<Class<?>, Set<WaitingEvent<? extends GenericEvent>>> waitingEvents;
     private final ScheduledExecutorService timeoutExecutor;
     private final boolean shutdownAutomatically;
@@ -42,8 +45,9 @@ public class EventWaiter implements EventListener {
     }
 
     public void shutdown() {
-        if (shutdownAutomatically)
+        if (shutdownAutomatically) {
             throw new UnsupportedOperationException("Shutting down EventWaiters that are set to automatically close is unsupported!");
+        }
         timeoutExecutor.shutdown();
     }
 
@@ -56,6 +60,7 @@ public class EventWaiter implements EventListener {
         Class<? extends GenericEvent> c = event.getClass();
 
         ClassWalker.walk(c).forEach(clazz -> {
+
             if (this.waitingEvents.containsKey(clazz)) {
                 Set<WaitingEvent<? extends GenericEvent>> set = waitingEvents.get(clazz);
                 WaitingEvent[] toRemove = set.toArray(WaitingEvent[]::new);
@@ -70,9 +75,10 @@ public class EventWaiter implements EventListener {
 
                 }).asList().forEach(set::remove);
             }
+
         });
 
-        if (event instanceof ShutdownEvent && shutdownAutomatically) {
+        if (event instanceof ShutdownEvent && shutdownAutomatically && !timeoutExecutor.isShutdown()) {
             timeoutExecutor.shutdown();
         }
     }
@@ -83,8 +89,7 @@ public class EventWaiter implements EventListener {
         private Predicate<T> condition = (e) -> true;
         private Consumer<T> action = (e) -> { };
         private Runnable timeoutAction = () -> { };
-        private TimeUnit unit = TimeUnit.SECONDS;
-        private long timeout = -1;
+        private Duration timeout = null;
 
         private Builder(@NotNull Class<T> eventType) {
             this.eventType = eventType;
@@ -100,9 +105,8 @@ public class EventWaiter implements EventListener {
             return this;
         }
 
-        public Builder<T> timeoutAfter(long time, @NotNull TimeUnit unit) {
-            this.unit = unit;
-            this.timeout = time;
+        public Builder<T> timeoutAfter(@Nullable Duration duration) {
+            this.timeout = duration;
             return this;
         }
 
@@ -118,7 +122,7 @@ public class EventWaiter implements EventListener {
             Set<WaitingEvent<?>> set = waitingEvents.computeIfAbsent(eventType, c -> new HashSet<>());
             set.add(event);
 
-            if (timeout > 0 && unit != null) {
+            if (timeout != null) {
                 timeoutExecutor.schedule(() -> {
 
                     if (event.wasExecuted()) {
@@ -135,7 +139,7 @@ public class EventWaiter implements EventListener {
                         LOGGER.error("Failed to run timeout Action.", ex);
                     }
 
-                }, timeout, unit);
+                }, timeout.toMillis(), TimeUnit.MILLISECONDS);
             }
 
             return event;

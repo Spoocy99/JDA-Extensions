@@ -11,6 +11,7 @@ import dev.spoocy.jdaextensions.commands.permission.CommandPermission;
 import dev.spoocy.jdaextensions.commands.event.CommandContext;
 import dev.spoocy.jdaextensions.commands.event.CommandPreProcessContext;
 import dev.spoocy.jdaextensions.commands.event.SlashCommandContext;
+import dev.spoocy.jdaextensions.core.DiscordBot;
 import dev.spoocy.utils.common.collections.Collector;
 import dev.spoocy.utils.common.log.ILogger;
 import dev.spoocy.utils.common.text.StringUtils;
@@ -39,20 +40,17 @@ public class DefaultCommandManager implements CommandManager {
     private final CommandAnnotationProcessor annotationProcessor;
     private final boolean useSlashCommands;
     private final String messagePrefix;
-    private final Long testingGuildId;
     private final CommandListener listener;
 
     private DefaultCommandManager(
             boolean useSlashCommands,
             @Nullable String messagePrefix,
-            @Nullable Long testingGuildId,
             @NotNull CommandAnnotationProcessor annotationProcessor,
             @NotNull CommandListener listener
     ) {
 
         this.useSlashCommands = useSlashCommands;
         this.messagePrefix = messagePrefix;
-        this.testingGuildId = testingGuildId;
         this.annotationProcessor = annotationProcessor;
         this.listener = listener;
     }
@@ -65,11 +63,6 @@ public class DefaultCommandManager implements CommandManager {
     @Override
     public boolean usePrefixCommands() {
         return !StringUtils.isNullOrEmpty(this.messagePrefix);
-    }
-
-    @Override
-    public boolean isTestingMode() {
-        return this.testingGuildId != null;
     }
 
     @Override
@@ -126,31 +119,36 @@ public class DefaultCommandManager implements CommandManager {
     }
 
     @Override
-    public void updateCommands(@NotNull JDA jda) {
+    public void commitCommands(@NotNull JDA jda, @Nullable Set<Long> guildIds) {
 
-        CommandListUpdateAction commands;
+        if (guildIds != null) {
 
-        if (this.isTestingMode()) {
+            for (Long guildId : guildIds) {
+                Guild guild = jda.getGuildById(guildId);
 
-            Guild guild = jda.getGuildById(this.testingGuildId);
+                if (guild == null) {
+                    LOGGER.warn("Guild with ID {} not found on shard {}. Skipping command commit for this guild.", guildId, jda.getShardInfo().getShardId());
+                    continue;
+                }
 
-            if (guild == null) {
-                LOGGER.warn("Testing guild with ID {} not found on shard {}. Skipping command commit...",
-                        this.testingGuildId, jda.getShardInfo()
-                                .getShardId());
-                return;
+                CommandListUpdateAction commands = guild.updateCommands();
+
+                int count = 0;
+                for (CommandData data : this.commandMap.values()) {
+                    commands = commands.addCommands(data.buildJDA());
+                    count++;
+                }
+
+                commands.queue();
+                LOGGER.debug("Commited {} commands to guild ID {} on shard {}", count, guildId, jda.getShardInfo()
+                        .getShardId());
             }
 
-            commands = guild.updateCommands();
-
-            LOGGER.warn("Committing commands to testing guild ID {} on shard {}. " +
-                            "These commands will NOT be available globally until the bot is restarted without testing mode.",
-                    this.testingGuildId, jda.getShardInfo()
-                            .getShardId());
-
-        } else {
-            commands = jda.updateCommands();
+            LOGGER.info("Commited {} guild commands on shard {}", guildIds.size(), jda.getShardInfo().getShardId());
+            return;
         }
+
+        CommandListUpdateAction commands = jda.updateCommands();
 
         int count = 0;
         for (CommandData data : this.commandMap.values()) {
@@ -159,8 +157,7 @@ public class DefaultCommandManager implements CommandManager {
         }
 
         commands.queue();
-        LOGGER.info("Commited {} commands on shard {}", count, jda.getShardInfo()
-                .getShardId());
+        LOGGER.info("Commited {} commands on shard {}", count, jda.getShardInfo().getShardId());
     }
 
     private void handleCommandPreProcess(@NotNull CommandPreProcessContext context) {
@@ -204,7 +201,7 @@ public class DefaultCommandManager implements CommandManager {
     }
 
     @Override
-    public void handleCommand(@NotNull SlashCommandInteractionEvent event) {
+    public void handleCommand(@NotNull SlashCommandInteractionEvent event, @NotNull DiscordBot bot) {
         if (!this.useSlashCommands()) {
             return;
         }
@@ -221,7 +218,7 @@ public class DefaultCommandManager implements CommandManager {
             return;
         }
 
-        CommandContext context = new SlashCommandContext(this, event);
+        CommandContext context = new SlashCommandContext(bot, this, event);
 
         if(data.acknowledge()) {
             LOGGER.debug("Acknowledging interaction for command '{}'.", data.name());
@@ -232,7 +229,7 @@ public class DefaultCommandManager implements CommandManager {
     }
 
     @Override
-    public void handlePrefixCommand(@NotNull MessageReceivedEvent event) {
+    public void handlePrefixCommand(@NotNull MessageReceivedEvent event, @NotNull DiscordBot bot) {
     }
 
     @Nullable
@@ -338,7 +335,6 @@ public class DefaultCommandManager implements CommandManager {
         private CommandListener listener = new CommandListener() {
         };
         private CommandAnnotationProcessor annotationProcessor = DefaultCommandAnnotationProcessor.DEFAULT;
-        private Long testingGuildId = null;
         private boolean useSlashCommands = true;
         private String messagePrefix = null;
         private final List<DiscordCommand> commands = new ArrayList<>();
@@ -351,11 +347,6 @@ public class DefaultCommandManager implements CommandManager {
 
         public Builder annotationProcessor(@NotNull CommandAnnotationProcessor processor) {
             this.annotationProcessor = processor;
-            return this;
-        }
-
-        public Builder testing(long guildId) {
-            this.testingGuildId = guildId;
             return this;
         }
 
@@ -393,7 +384,6 @@ public class DefaultCommandManager implements CommandManager {
             DefaultCommandManager manager = new DefaultCommandManager(
                     this.useSlashCommands,
                     this.messagePrefix,
-                    this.testingGuildId,
                     this.annotationProcessor,
                     this.listener
             );

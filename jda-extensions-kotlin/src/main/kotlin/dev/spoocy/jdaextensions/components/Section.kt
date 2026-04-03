@@ -40,7 +40,6 @@ class SectionBuilder : ComponentBuilder<Section> {
         return this
     }
 
-
     override fun build(): Section {
         accessory ?: throw IllegalStateException("Section must have an accessory component")
         return Section.of(accessory!!, content)

@@ -4,6 +4,7 @@ import dev.spoocy.jdaextensions.commands.arguments.ProvidedArgument;
 import dev.spoocy.jdaextensions.commands.arguments.WrappedOption;
 import dev.spoocy.jdaextensions.commands.manager.CommandManager;
 import dev.spoocy.jdaextensions.commands.message.ReplyAction;
+import dev.spoocy.jdaextensions.core.DiscordBot;
 import dev.spoocy.utils.common.collections.Collector;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.components.MessageTopLevelComponent;
@@ -41,14 +42,16 @@ public class MessageCommandContext extends AbstractCommandContext {
     private final MessageReceivedEvent event;
     private final List<WrappedOption> arguments;
 
-    public MessageCommandContext(@NotNull String fullName,
-                                 @NotNull String commandName,
-                                 @Nullable String subcommandName,
-                                 @NotNull List<WrappedOption> arguments,
-                                 @NotNull CommandManager manager,
-                                 @NotNull MessageReceivedEvent event
+    public MessageCommandContext(
+            @NotNull String fullName,
+            @NotNull String commandName,
+            @Nullable String subcommandName,
+            @NotNull List<WrappedOption> arguments,
+            @NotNull DiscordBot bot,
+            @NotNull CommandManager manager,
+            @NotNull MessageReceivedEvent event
     ) {
-        super(manager, event.getChannel());
+        super(bot, manager, event.getChannel());
         this.fullName = fullName;
         this.commandName = commandName;
         this.subcommandName = subcommandName;
@@ -69,6 +72,11 @@ public class MessageCommandContext extends AbstractCommandContext {
     @Override
     public @Nullable DataObject getRawData() {
         return this.event.getRawData();
+    }
+
+    @Override
+    public @NotNull DiscordBot getProvidingBot() {
+        return null;
     }
 
     @NotNull
@@ -98,7 +106,10 @@ public class MessageCommandContext extends AbstractCommandContext {
     @Nullable
     @Override
     public ProvidedArgument getArgument(@NotNull String name) {
-        return Collector.of(this.arguments).first(a -> a.getName().equals(name)).orElse(null);
+        return Collector.of(this.arguments)
+                .first(a -> a.getName()
+                        .equals(name))
+                .orElse(null);
     }
 
     @Override
@@ -113,7 +124,9 @@ public class MessageCommandContext extends AbstractCommandContext {
 
     @Override
     public boolean isPrivate() {
-        return this.event.getChannel().getType().equals(ChannelType.PRIVATE);
+        return this.event.getChannel()
+                .getType()
+                .equals(ChannelType.PRIVATE);
     }
 
     @NotNull
@@ -133,12 +146,14 @@ public class MessageCommandContext extends AbstractCommandContext {
     @NotNull
     @Override
     public TextChannel getTextChannel() {
-        return this.event.getChannel().asTextChannel();
+        return this.event.getChannel()
+                .asTextChannel();
     }
 
     @Override
     public @NotNull PrivateChannel getPrivateChannel() {
-        return getUser().openPrivateChannel().complete();
+        return getUser().openPrivateChannel()
+                .complete();
     }
 
     @Override
@@ -158,17 +173,21 @@ public class MessageCommandContext extends AbstractCommandContext {
 
     @Override
     public ReplyAction reply(@NotNull String content) {
-        return wrap(this.event.getMessage().reply(content));
+        return wrap(this.event.getMessage()
+                .reply(content));
     }
 
     @Override
     public ReplyAction reply(@NotNull Message message) {
-        return wrap(this.event.getMessage().reply(new MessageCreateBuilder().applyMessage(message).build()));
+        return wrap(this.event.getMessage()
+                .reply(new MessageCreateBuilder().applyMessage(message)
+                        .build()));
     }
 
     @Override
     public ReplyAction reply(@NotNull MessageCreateData message) {
-        return wrap(this.event.getMessage().reply(message));
+        return wrap(this.event.getMessage()
+                .reply(message));
     }
 
     @Override
@@ -177,12 +196,15 @@ public class MessageCommandContext extends AbstractCommandContext {
         for (MessageEmbed e : other) {
             builder.addEmbeds(e);
         }
-        return wrap(this.event.getMessage().reply(builder.build()));
+        return wrap(this.event.getMessage()
+                .reply(builder.build()));
     }
 
     @Override
     public ReplyAction reply(@NotNull Collection<MessageEmbed> embed) {
-        return wrap(this.event.getMessage().reply(new MessageCreateBuilder().addEmbeds(embed).build()));
+        return wrap(this.event.getMessage()
+                .reply(new MessageCreateBuilder().addEmbeds(embed)
+                        .build()));
     }
 
     @Override
@@ -202,7 +224,9 @@ public class MessageCommandContext extends AbstractCommandContext {
 
     @Override
     public ReplyAction replyComponents(boolean v2, @NotNull Collection<? extends MessageTopLevelComponent> components) {
-        return wrap(this.event.getMessage().replyComponents(components).useComponentsV2(v2));
+        return wrap(this.event.getMessage()
+                .replyComponents(components)
+                .useComponentsV2(v2));
     }
 
     @Override
@@ -211,42 +235,53 @@ public class MessageCommandContext extends AbstractCommandContext {
             @NotNull MessageTopLevelComponent component,
             @NotNull MessageTopLevelComponent... other
     ) {
-        return wrap(this.event.getMessage().replyComponents(component, other).useComponentsV2(v2));
+        return wrap(this.event.getMessage()
+                .replyComponents(component, other)
+                .useComponentsV2(v2));
     }
 
     @Override
     public ReplyAction replyComponents(@NotNull ComponentTree<? extends MessageTopLevelComponent> tree) {
-        return wrap(this.event.getMessage().replyComponents(tree));
+        return wrap(this.event.getMessage()
+                .replyComponents(tree));
     }
 
     @Override
     public ReplyAction replyFiles(@NotNull FileUpload... files) {
-        return wrap(this.event.getMessage().replyFiles(files));
+        return wrap(this.event.getMessage()
+                .replyFiles(files));
     }
 
     @Override
     public ReplyAction replyFiles(@NotNull Collection<? extends FileUpload> files) {
-        return wrap(this.event.getMessage().replyFiles(files));
+        return wrap(this.event.getMessage()
+                .replyFiles(files));
     }
 
     @Override
     public ReplyAction replyPoll(@NotNull MessagePollData poll) {
-        return wrap(this.event.getMessage().replyPoll(poll));
+        return wrap(this.event.getMessage()
+                .replyPoll(poll));
     }
 
     @Override
     public ReplyAction send(@NotNull String message) {
-        return wrap(this.event.getMessage().reply(message));
+        return wrap(this.event.getMessage()
+                .reply(message));
     }
 
     @Override
     public ReplyAction send(@NotNull Message message) {
-        return wrap(this.event.getMessage().reply(new MessageCreateBuilder().applyMessage(message).build()));
+        return wrap(this.event.getMessage()
+                .reply(new MessageCreateBuilder().applyMessage(message)
+                        .build()));
     }
 
     @Override
     public ReplyAction send(@NotNull MessageEmbed embed) {
-        return wrap(this.event.getMessage().reply(new MessageCreateBuilder().addEmbeds(embed).build()));
+        return wrap(this.event.getMessage()
+                .reply(new MessageCreateBuilder().addEmbeds(embed)
+                        .build()));
     }
 
     @Override
@@ -256,11 +291,13 @@ public class MessageCommandContext extends AbstractCommandContext {
 
     @Override
     public ReplyAction sendPrivate(@NotNull Message message) {
-        return wrap(getPrivateChannel().sendMessage(new MessageCreateBuilder().applyMessage(message).build()));
+        return wrap(getPrivateChannel().sendMessage(new MessageCreateBuilder().applyMessage(message)
+                .build()));
     }
 
     @Override
     public ReplyAction sendPrivate(@NotNull MessageEmbed embed) {
-        return wrap(getPrivateChannel().sendMessage(new MessageCreateBuilder().addEmbeds(embed).build()));
+        return wrap(getPrivateChannel().sendMessage(new MessageCreateBuilder().addEmbeds(embed)
+                .build()));
     }
 }

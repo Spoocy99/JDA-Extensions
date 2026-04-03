@@ -6,6 +6,7 @@ import org.mockito.Mockito;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -57,7 +58,7 @@ public class EventWaiterTest {
         AtomicBoolean timedOut = new AtomicBoolean(false);
 
         waiter.waitFor(TestEvent.class)
-                .timeoutAfter(50, TimeUnit.MILLISECONDS)
+                .timeoutAfter(Duration.ofMillis(50))
                 .runOnTimeout(() -> timedOut.set(true))
                 .build();
 

@@ -3,7 +3,7 @@ package dev.spoocy.jdaextensions.commands.event;
 import dev.spoocy.jdaextensions.commands.manager.CommandManager;
 import dev.spoocy.jdaextensions.commands.arguments.ProvidedArgument;
 import dev.spoocy.jdaextensions.commands.message.MessageReply;
-import dev.spoocy.jdaextensions.commands.message.ReplyAction;
+import dev.spoocy.jdaextensions.core.DiscordBot;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
@@ -20,7 +20,6 @@ import net.dv8tion.jda.api.interactions.Interaction;
 import net.dv8tion.jda.api.modals.Modal;
 import net.dv8tion.jda.api.requests.restaction.interactions.ModalCallbackAction;
 import net.dv8tion.jda.api.sharding.ShardManager;
-import net.dv8tion.jda.api.utils.messages.MessagePollData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +30,14 @@ import java.util.List;
  */
 
 public interface CommandContext extends MessageReply {
+
+    /**
+     * Gets the {@link DiscordBot} instance that provides this CommandContext.
+     *
+     * @return the providing bot instance
+     */
+    @NotNull
+    DiscordBot getProvidingBot();
 
     /**
      * Gets the full command string as entered by the user.

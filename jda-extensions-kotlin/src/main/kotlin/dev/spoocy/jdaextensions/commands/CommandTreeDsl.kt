@@ -1,4 +1,4 @@
-package dev.spoocy.jdaextensions
+package dev.spoocy.jdaextensions.commands
 
 import dev.spoocy.jdaextensions.commands.arguments.impl.AbstractArgument
 import dev.spoocy.jdaextensions.commands.cooldown.CooldownScope

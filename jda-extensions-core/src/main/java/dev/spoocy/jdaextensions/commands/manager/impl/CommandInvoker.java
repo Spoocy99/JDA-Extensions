@@ -67,6 +67,16 @@ public class CommandInvoker implements Consumer<CommandContext> {
 
     @Override
     public void accept(CommandContext commandContext) {
+        Object[] args = prepareArguments(commandContext);
+
+        try {
+            method.invoke(instance, args);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to invoke command method " + method.getMethod().getName() + " with arguments " + Arrays.toString(args), e);
+        }
+    }
+
+    protected Object[] prepareArguments(CommandContext commandContext) {
         Object[] args = new Object[arguments.length + 1];
         args[0] = commandContext;
 
@@ -84,7 +94,7 @@ public class CommandInvoker implements Consumer<CommandContext> {
             args[i + 1] = value;
         }
 
-        method.invoke(instance, args);
+        return args;
     }
 
 

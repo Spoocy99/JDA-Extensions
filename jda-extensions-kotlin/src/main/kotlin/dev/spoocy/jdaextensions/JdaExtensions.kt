@@ -1,6 +1,8 @@
 package dev.spoocy.jdaextensions
 
 import dev.spoocy.jdaextensions.commands.manager.impl.DefaultCommandManager
+import dev.spoocy.jdaextensions.core.BotSettingsBuilder
+import dev.spoocy.jdaextensions.events.CoroutinesEventManager
 import net.dv8tion.jda.api.requests.restaction.CacheRestAction
 
 /**
@@ -11,6 +13,9 @@ inline fun <reified C> DefaultCommandManager.Builder.register(): DefaultCommandM
     return this.registerCommand(C::class.java)
 }
 
-inline fun <T> CacheRestAction<T>.queue(crossinline onSuccess: (T) -> Unit, crossinline onFailure: (Throwable) -> Unit = {}) {
+inline fun <T> CacheRestAction<T>.queue(
+    crossinline onSuccess: (T) -> Unit,
+    crossinline onFailure: (Throwable) -> Unit = {}
+) {
     this.queue({ onSuccess(it) }, { onFailure(it) })
 }

@@ -4,6 +4,7 @@ import dev.spoocy.jdaextensions.commands.arguments.ProvidedArgument;
 import dev.spoocy.jdaextensions.commands.arguments.WrappedOption;
 import dev.spoocy.jdaextensions.commands.manager.CommandManager;
 import dev.spoocy.jdaextensions.commands.message.ReplyAction;
+import dev.spoocy.jdaextensions.core.DiscordBot;
 import dev.spoocy.utils.common.collections.Collector;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.components.MessageTopLevelComponent;
@@ -37,9 +38,12 @@ public class SlashCommandContext extends AbstractCommandContext {
     private final SlashCommandInteractionEvent event;
     private final List<WrappedOption> arguments;
 
-    public SlashCommandContext(@NotNull CommandManager manager,
-                               @NotNull SlashCommandInteractionEvent event) {
-        super(manager, event.getChannel());
+    public SlashCommandContext(
+            @NotNull DiscordBot bot,
+            @NotNull CommandManager manager,
+            @NotNull SlashCommandInteractionEvent event
+    ) {
+        super(bot, manager, event.getChannel());
         this.event = event;
         this.arguments = WrappedOption.wrap(event.getOptions());
     }
@@ -86,7 +90,10 @@ public class SlashCommandContext extends AbstractCommandContext {
     @Nullable
     @Override
     public ProvidedArgument getArgument(@NotNull String name) {
-        return Collector.of(this.arguments).first(a -> a.getName().equals(name)).orElse(null);
+        return Collector.of(this.arguments)
+                .first(a -> a.getName()
+                        .equals(name))
+                .orElse(null);
     }
 
     @Override
@@ -101,7 +108,9 @@ public class SlashCommandContext extends AbstractCommandContext {
 
     @Override
     public boolean isPrivate() {
-        return this.event.getChannel().getType().equals(ChannelType.PRIVATE);
+        return this.event.getChannel()
+                .getType()
+                .equals(ChannelType.PRIVATE);
     }
 
     @NotNull
@@ -121,12 +130,14 @@ public class SlashCommandContext extends AbstractCommandContext {
     @NotNull
     @Override
     public TextChannel getTextChannel() {
-        return this.event.getChannel().asTextChannel();
+        return this.event.getChannel()
+                .asTextChannel();
     }
 
     @Override
     public @NotNull PrivateChannel getPrivateChannel() {
-        return getUser().openPrivateChannel().complete();
+        return getUser().openPrivateChannel()
+                .complete();
     }
 
     @Override
@@ -146,27 +157,36 @@ public class SlashCommandContext extends AbstractCommandContext {
 
     @Override
     public ReplyAction reply(@NotNull String content) {
-        return wrap(this.event.getHook().sendMessage(content));
+        return wrap(this.event.getHook()
+                .sendMessage(content));
     }
 
     @Override
     public ReplyAction reply(@NotNull Message message) {
-        return wrap(this.event.getHook().sendMessage(new MessageCreateBuilder().applyMessage(message).build()));
+        return wrap(this.event.getHook()
+                .sendMessage(new MessageCreateBuilder().applyMessage(message)
+                        .build()));
     }
 
     @Override
     public ReplyAction reply(@NotNull MessageCreateData message) {
-        return wrap(this.event.getHook().sendMessage(message));
+        return wrap(this.event.getHook()
+                .sendMessage(message));
     }
 
     @Override
     public ReplyAction reply(@NotNull MessageEmbed embed, MessageEmbed... other) {
-        return wrap(this.event.getHook().sendMessage(new MessageCreateBuilder().addEmbeds(embed).addEmbeds(other).build()));
+        return wrap(this.event.getHook()
+                .sendMessage(new MessageCreateBuilder().addEmbeds(embed)
+                        .addEmbeds(other)
+                        .build()));
     }
 
     @Override
     public ReplyAction reply(@NotNull Collection<MessageEmbed> embed) {
-        return wrap(this.event.getHook().sendMessage(new MessageCreateBuilder().addEmbeds(embed).build()));
+        return wrap(this.event.getHook()
+                .sendMessage(new MessageCreateBuilder().addEmbeds(embed)
+                        .build()));
     }
 
 
@@ -182,12 +202,16 @@ public class SlashCommandContext extends AbstractCommandContext {
 
     @Override
     public void acknowledge(boolean ephemeral) {
-        this.event.deferReply(ephemeral).queue();
+        this.event.deferReply(ephemeral)
+                .queue();
     }
 
     @Override
     public ReplyAction replyComponents(boolean v2, @NotNull Collection<? extends MessageTopLevelComponent> components) {
-        return wrap(this.event.getHook().sendMessage(new MessageCreateBuilder().addComponents(components).useComponentsV2(v2).build()));
+        return wrap(this.event.getHook()
+                .sendMessage(new MessageCreateBuilder().addComponents(components)
+                        .useComponentsV2(v2)
+                        .build()));
     }
 
     @Override
@@ -196,42 +220,60 @@ public class SlashCommandContext extends AbstractCommandContext {
             @NotNull MessageTopLevelComponent component,
             @NotNull MessageTopLevelComponent... other
     ) {
-        return wrap(this.event.getHook().sendMessage(new MessageCreateBuilder().addComponents(component).addComponents(other).useComponentsV2(v2).build()));
+        return wrap(this.event.getHook()
+                .sendMessage(new MessageCreateBuilder().addComponents(component)
+                        .addComponents(other)
+                        .useComponentsV2(v2)
+                        .build()));
     }
 
     @Override
     public ReplyAction replyComponents(@NotNull ComponentTree<? extends MessageTopLevelComponent> tree) {
-        return wrap(this.event.getHook().sendMessage(new MessageCreateBuilder().addComponents(tree).useComponentsV2().build()));
+        return wrap(this.event.getHook()
+                .sendMessage(new MessageCreateBuilder().addComponents(tree)
+                        .useComponentsV2()
+                        .build()));
     }
 
     @Override
     public ReplyAction replyFiles(@NotNull FileUpload... files) {
-        return wrap(this.event.getHook().sendMessage(new MessageCreateBuilder().addFiles(files).build()));
+        return wrap(this.event.getHook()
+                .sendMessage(new MessageCreateBuilder().addFiles(files)
+                        .build()));
     }
 
     @Override
     public ReplyAction replyFiles(@NotNull Collection<? extends FileUpload> files) {
-        return wrap(this.event.getHook().sendMessage(new MessageCreateBuilder().addFiles(files).build()));
+        return wrap(this.event.getHook()
+                .sendMessage(new MessageCreateBuilder().addFiles(files)
+                        .build()));
     }
 
     @Override
     public ReplyAction replyPoll(@NotNull MessagePollData poll) {
-        return wrap(this.event.getHook().sendMessage(new MessageCreateBuilder().setPoll(poll).build()));
+        return wrap(this.event.getHook()
+                .sendMessage(new MessageCreateBuilder().setPoll(poll)
+                        .build()));
     }
 
     @Override
     public ReplyAction send(@NotNull String message) {
-        return wrap(this.event.getHook().sendMessage(message));
+        return wrap(this.event.getHook()
+                .sendMessage(message));
     }
 
     @Override
     public ReplyAction send(@NotNull Message message) {
-        return wrap(this.event.getHook().sendMessage(new MessageCreateBuilder().applyMessage(message).build()));
+        return wrap(this.event.getHook()
+                .sendMessage(new MessageCreateBuilder().applyMessage(message)
+                        .build()));
     }
 
     @Override
     public ReplyAction send(@NotNull MessageEmbed embed) {
-        return wrap(this.event.getHook().sendMessage(new MessageCreateBuilder().addEmbeds(embed).build()));
+        return wrap(this.event.getHook()
+                .sendMessage(new MessageCreateBuilder().addEmbeds(embed)
+                        .build()));
     }
 
     @Override
@@ -241,11 +283,13 @@ public class SlashCommandContext extends AbstractCommandContext {
 
     @Override
     public ReplyAction sendPrivate(@NotNull Message message) {
-        return wrap(getPrivateChannel().sendMessage(new MessageCreateBuilder().applyMessage(message).build()));
+        return wrap(getPrivateChannel().sendMessage(new MessageCreateBuilder().applyMessage(message)
+                .build()));
     }
 
     @Override
     public ReplyAction sendPrivate(@NotNull MessageEmbed embed) {
-        return wrap(getPrivateChannel().sendMessage(new MessageCreateBuilder().addEmbeds(embed).build()));
+        return wrap(getPrivateChannel().sendMessage(new MessageCreateBuilder().addEmbeds(embed)
+                .build()));
     }
 }

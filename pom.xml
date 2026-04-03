@@ -6,7 +6,7 @@
 
     <groupId>dev.spoocy</groupId>
     <artifactId>jda-extensions</artifactId>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <packaging>pom</packaging>
 
     <licenses>
@@ -64,12 +64,6 @@
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
             <version>26.0.2-1</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>1.18.32</version>
         </dependency>
 
         <dependency>

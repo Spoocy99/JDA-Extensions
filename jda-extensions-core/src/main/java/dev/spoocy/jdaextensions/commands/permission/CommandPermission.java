@@ -1,6 +1,5 @@
 package dev.spoocy.jdaextensions.commands.permission;
 
-import dev.spoocy.jdaextensions.core.DiscordBot;
 import dev.spoocy.jdaextensions.commands.event.CommandContext;
 import net.dv8tion.jda.api.Permission;
 import org.jetbrains.annotations.NotNull;
@@ -13,8 +12,8 @@ import java.util.List;
 
 public interface CommandPermission {
 
-    CommandPermission ADMIN = event -> event.hasPermission(Permission.ADMINISTRATOR);
-    CommandPermission OWNER = event -> DiscordBot.getInstance().isOwner(event.getUser().getIdLong());
+    CommandPermission ADMIN = context -> context.hasPermission(Permission.ADMINISTRATOR);
+    CommandPermission OWNER = context -> context.getProvidingBot().isOwner(context.getUser().getIdLong());
 
     static CommandPermission channel(@NotNull Permission permission) {
         return new ChannelPermission(permission);

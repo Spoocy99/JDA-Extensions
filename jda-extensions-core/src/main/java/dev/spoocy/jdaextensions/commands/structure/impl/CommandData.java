@@ -4,7 +4,6 @@ import dev.spoocy.jdaextensions.commands.arguments.impl.AbstractArgument;
 import dev.spoocy.jdaextensions.commands.structure.CommandNode;
 import dev.spoocy.jdaextensions.commands.structure.CommandNodeHolder;
 import dev.spoocy.jdaextensions.commands.structure.DiscordCommand;
-import lombok.Getter;
 import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -12,6 +11,7 @@ import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,7 +20,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Spoocy99 | GitHub: Spoocy99
  */
 
-@Getter
 public class CommandData extends AbstractCommandNodeHolder implements DiscordCommand {
 
     private final Map<String, CommandGroupData> subCommandGroups = new ConcurrentHashMap<>();
@@ -56,6 +55,10 @@ public class CommandData extends AbstractCommandNodeHolder implements DiscordCom
 
     public void setRootCommand(@Nullable CommandNodeData rootCommand) {
         this.rootCommand = rootCommand;
+    }
+
+    public Collection<CommandGroupData> getSubCommandGroups() {
+        return this.subCommandGroups.values();
     }
 
     @NotNull

@@ -1,6 +1,7 @@
 package dev.spoocy.jdaextensions.commands.manager;
 
 import dev.spoocy.jdaextensions.commands.structure.DiscordCommand;
+import dev.spoocy.jdaextensions.core.DiscordBot;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -9,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Set;
 
 /**
  * @author Spoocy99 | GitHub: Spoocy99
@@ -29,18 +31,6 @@ public interface CommandManager {
      * @return {@code true} if prefix commands are enabled, {@code false} otherwise.
      */
     boolean usePrefixCommands();
-
-    /**
-     * Checks if the manager is in testing mode.
-     * <br>
-     * In testing mode, commands are only registered in test guilds.
-     * <br>
-     * This will speed up the command registration process
-     * to allow for faster testing and development.
-     *
-     * @return {@code true} if in testing mode, {@code false} otherwise.
-     */
-    boolean isTestingMode();
 
     /**
      * Gets the command prefix used for prefix commands.
@@ -130,10 +120,11 @@ public interface CommandManager {
      * This will commit all registered commands to Discord.
      *
      * @param jda the JDA instance to update commands for.
+     * @param guildIds the IDs of the guilds to update commands for, or {@code null} to update global commands.
      *
      * @see JDA#updateCommands()
      */
-    void updateCommands(@NotNull JDA jda);
+    void commitCommands(@NotNull JDA jda, @Nullable Set<Long> guildIds);
 
     /**
      * Handles a slash command interaction event.
@@ -141,7 +132,7 @@ public interface CommandManager {
      * @param event the slash command interaction event to handle.
      */
     @ApiStatus.Internal
-    void handleCommand(@NotNull SlashCommandInteractionEvent event);
+    void handleCommand(@NotNull SlashCommandInteractionEvent event, @NotNull DiscordBot bot);
 
     /**
      * Executes a command if the message received event
@@ -150,5 +141,5 @@ public interface CommandManager {
      * @param event the message received event to handle.
      */
     @ApiStatus.Internal
-    void handlePrefixCommand(@NotNull MessageReceivedEvent event);
+    void handlePrefixCommand(@NotNull MessageReceivedEvent event, @NotNull DiscordBot bot);
 }

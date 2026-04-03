@@ -1,33 +1,34 @@
 package dev.spoocy;
 
+import dev.spoocy.jdaextensions.commands.arguments.Arguments;
+import dev.spoocy.jdaextensions.commands.arguments.ProvidedArgument;
 import dev.spoocy.jdaextensions.commands.manager.impl.DefaultCommandManager;
 import dev.spoocy.jdaextensions.commands.tree.CommandTree;
-import dev.spoocy.jdaextensions.core.BotBuilder;
-import dev.spoocy.jdaextensions.core.BotConfig;
-import dev.spoocy.jdaextensions.core.DiscordBot;
+import dev.spoocy.jdaextensions.core.BotSettings;
+import dev.spoocy.jdaextensions.core.SingleShardDiscordBot;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.hooks.SubscribeEvent;
+import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-import java.util.concurrent.TimeUnit;
+import java.time.Duration;
 
 /**
  * @author Spoocy99 | GitHub: Spoocy99
  */
 
-public class BotExample extends DiscordBot<BotConfig> {
+public class BotExample extends SingleShardDiscordBot {
 
     public static void main(String[] args) {
 
-        // create an instance of a custom BotConfig implementation that reads data from a json file
-        ExtendedBotConfig botConfig = new ExtendedBotConfig(new File("config.json"));
-
-        BotBuilder builder = new BotBuilder()
-                .addActivity(() -> Activity.playing("Testing..."))
-                .setAllIntents()
+        BotSettings settings = BotSettings.builder()
+                .setActivity(i -> Activity.playing("Testing..."))
+                .setIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MESSAGES)
+                .setAutoLogin(false) // disable auto-login, have to manually call login() after creating the bot instance
                 .setCommandManager(
                         DefaultCommandManager.builder()
                                 // Add commands using the CommandTree builder
@@ -44,8 +45,17 @@ public class BotExample extends DiscordBot<BotConfig> {
 
                                                 // Command: /test first
                                                 .then(CommandTree.command("first", "First subcommand")
+                                                        .arg(
+                                                                Arguments.string("input", "Some input", false, false)
+                                                                        .choice("Option 1", "option1")
+                                                                        .choice("Option 2", "option2")
+                                                        )
                                                         .executes(context -> {
-                                                            context.reply("You executed the first subcommand!");
+
+                                                            ProvidedArgument inputArg = context.getArgument("input");
+                                                            String input = inputArg != null ? inputArg.getAsString() : "No input provided";
+
+                                                            context.reply("You executed the first subcommand with input: " + input);
                                                         })
                                                 )
 
@@ -57,7 +67,7 @@ public class BotExample extends DiscordBot<BotConfig> {
 
                                                             getInstance().getEventWaiter().waitFor(MessageReceivedEvent.class)
                                                                     .runIf(event -> event.getAuthor().getIdLong() == context.getUser().getIdLong())
-                                                                    .timeoutAfter(30, TimeUnit.SECONDS)
+                                                                    .timeoutAfter(Duration.ofSeconds(30))
                                                                     .runOnTimeout(() -> {
                                                                         context.reply("You did not reply in time!");
                                                                     })
@@ -71,15 +81,14 @@ public class BotExample extends DiscordBot<BotConfig> {
                                                 )
                                                 .build()
                                 )
-                                .register(AnnotationCommandExample.class)     // annotation-based command are also supported
+                                .registerCommand(AnnotationCommandExample.class)     // annotation-based command are also supported
                                 .build()
 
-                )
-                .addListener(new ListenerExample())             // supports both ListenerAdapter and annotation-based listeners
+                ).build()
                 ;
 
         // create the bot instance
-        new BotExample(botConfig, builder);
+        new BotExample(settings);
 
     }
 
@@ -89,9 +98,18 @@ public class BotExample extends DiscordBot<BotConfig> {
         return INSTANCE;
     }
 
-    public BotExample(@NotNull BotConfig config, @NotNull BotBuilder builder) {
-        super(config, builder);
+    public BotExample(@NotNull BotSettings settings) {
+        super(settings);
         INSTANCE = this;
+        this.login();   // manually log in the bot since auto-login is disabled in the settings
+    }
+
+    @Override
+    protected void configure(@NotNull JDABuilder builder) {
+        // modify the JDABuilder before building the JDA instance
+        // (e.g. add additional event listeners, set member cache policy, etc.)
+
+        builder.addEventListeners(new ListenerExample()); // supports both ListenerAdapter and annotation-based listeners
     }
 
     @Override

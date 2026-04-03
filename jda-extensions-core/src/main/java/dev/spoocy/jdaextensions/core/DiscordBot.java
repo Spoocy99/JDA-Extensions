@@ -1,126 +1,204 @@
 package dev.spoocy.jdaextensions.core;
 
 import dev.spoocy.jdaextensions.commands.manager.CommandManager;
-import dev.spoocy.jdaextensions.event.AdvancedEventManager;
+import dev.spoocy.jdaextensions.commands.structure.DiscordCommand;
 import dev.spoocy.jdaextensions.event.EventWaiter;
-import dev.spoocy.utils.common.collections.Collector;
-import dev.spoocy.utils.common.log.FactoryHolder;
 import dev.spoocy.utils.common.log.ILogger;
-import dev.spoocy.utils.common.log.LogLevel;
-import dev.spoocy.utils.common.text.FormatUtils;
-import dev.spoocy.utils.common.scheduler.Scheduler;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.OnlineStatus;
+import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.ApplicationInfo;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.events.session.SessionDisconnectEvent;
 import net.dv8tion.jda.api.events.session.SessionResumeEvent;
-import net.dv8tion.jda.api.events.session.ShutdownEvent;
 import net.dv8tion.jda.api.hooks.IEventManager;
 import net.dv8tion.jda.api.hooks.SubscribeEvent;
 import net.dv8tion.jda.api.requests.CloseCode;
-import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
-import net.dv8tion.jda.api.sharding.ShardManager;
-import okhttp3.OkHttpClient;
+import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
+import java.util.Set;
+import java.util.function.IntFunction;
 
 /**
  * @author Spoocy99 | GitHub: Spoocy99
  */
 
-public abstract class DiscordBot<S extends BotSettings> {
+public abstract class DiscordBot {
 
-    private static final ILogger LOGGER = ILogger.forThisClass();
+    protected static final ILogger LOGGER = ILogger.forThisClass();
 
-    private static DiscordBot<?> INSTANCE;
-
-    public static DiscordBot<?> getInstance() {
-        return INSTANCE;
-    }
-
-    private final S config;
-    private final long startupTime;
-    private final int activityUpdateRate;
-    private final List<Supplier<? extends Activity>> activities;
-    private final List<Consumer<? super JDA>> shardActions;
-    private final IEventManager eventManager;
-    private final ShardManager shardManager;
-    private ApplicationInfo applicationInfo;
+    private final String token;
+    private final Collection<GatewayIntent> intents;
+    private final Set<Long> owners;
+    private final Set<Long> guilds;
+    private final int shards;
+    private final IntFunction<OnlineStatus> onlineStatus;
+    private final IntFunction<Activity> activity;
+    private final IntFunction<? extends IEventManager> eventManager;
     private final EventWaiter eventWaiter;
-
-    @Nullable
+    private final boolean autoCommitCommands;
     private final CommandManager commandManager;
 
-    private final ScheduledExecutorService scheduler = Scheduler.newScheduledThreadPool(1);
+    private boolean loggedIn;
+    private long startupTime;
+    private ApplicationInfo applicationInfo;
 
-    public DiscordBot(@NotNull S config, @NotNull BotBuilder builder) {
-        if (INSTANCE != null) {
-            throw new IllegalStateException("An instance of DiscordBot already exists!");
+    /**
+     * Creates a new bot instance with the given settings.
+     * <p>
+     * If {@link BotSettings#autoLogin()} is {@code true} (default), the bot will automatically log in.
+     * If {@code false}, the settings are stored and you must call {@link #login()} to start the bot.
+     * This allows subclasses to perform additional configuration in their constructors before the bot logs in.
+     * <p>
+     * Example usage with deferred login:
+     * <pre>{@code
+     * public class MyBot extends DiscordBot {
+     *     private final MyService service;
+     *
+     *     public MyBot(BotSettings settings, MyService service) {
+     *         super(settings); // autoLogin = false
+     *         this.service = service;
+     *         // Additional setup using constructor args...
+     *         login(); // Now login after setup is complete
+     *     }
+     *
+     *     @Override
+     *     protected void configure() {
+     *         // Called before login - can use this.service here
+     *         registerCommand(new MyCommand(service));
+     *     }
+     * }
+     * }</pre>
+     *
+     * @param settings the settings to use for this bot.
+     */
+    public DiscordBot(@NotNull BotSettings settings) {
+        this(
+                settings.token(),
+                settings.intents(),
+                settings.autoLogin(),
+                settings.owners(),
+                settings.guilds(),
+                settings.shards(),
+                settings.onlineStatus(),
+                settings.activity(),
+                settings.eventManager(),
+                settings.eventWaiter(),
+                settings.autoCommitCommands(),
+                settings.commandManager()
+        );
+    }
+
+    public DiscordBot(
+            @NotNull String token,
+            @NotNull Collection<GatewayIntent> intents,
+            boolean autoLogin,
+            @NotNull Set<Long> owners,
+            @Nullable Set<Long> guilds,
+            int shards,
+            @NotNull IntFunction<OnlineStatus> onlineStatus,
+            @NotNull IntFunction<Activity> activity,
+            @NotNull IntFunction<? extends IEventManager> eventManager,
+            @Nullable EventWaiter eventWaiter,
+            boolean autoCommitCommands,
+            @Nullable CommandManager commandManager
+    ) {
+        this.token = token;
+        this.intents = Collections.unmodifiableCollection(intents);
+        this.owners = Collections.unmodifiableSet(owners);
+        this.guilds = guilds != null ? Collections.unmodifiableSet(guilds) : null;
+        this.shards = shards;
+        this.onlineStatus = onlineStatus;
+        this.activity = activity;
+        this.eventManager = eventManager;
+        this.eventWaiter = eventWaiter;
+        this.autoCommitCommands = autoCommitCommands;
+        this.commandManager = commandManager;
+
+        if (autoLogin) {
+            this.login();
         }
-        INSTANCE = this;
+    }
 
-        this.config = config;
-        this.startupTime = System.currentTimeMillis();
-        this.activityUpdateRate = builder.activityUpdateRate;
-        this.activities = List.copyOf(builder.activities);
-        this.shardActions = List.copyOf(builder.shardActions);
-        this.eventManager = new AdvancedEventManager();
-        this.eventWaiter = new EventWaiter(Scheduler.newScheduledThreadPool(1), true);
+    /**
+     * Starts this bot using the settings provided in the constructor.
+     * <p>
+     * This method should only be called when the bot was created with {@link BotSettings#autoLogin()}
+     * set to {@code false}.
+     *
+     * @throws IllegalStateException if the bot has already been logged in or no settings were provided.
+     */
+    public void login() {
+        if (this.loggedIn) {
+            throw new IllegalStateException("This bot has already been logged in!");
+        }
+        this.loggedIn = true;
 
-        LogLevel level = config.logLevel();
-        FactoryHolder.setLevel(level);
-        LOGGER.info("Logging level set to: " + level);
+        this.configure();
 
-        builder.validate();
-        LOGGER.info("Initializing bot with: "
-                + "\n\t" + config.toString()
-                + "\n\t" + builder.formatInstanceInfo()
+        this.prepareLogin(
+                this.shards,
+                this.token,
+                this.intents,
+                this.onlineStatus,
+                this.activity,
+                this.eventManager
         );
 
-        DefaultShardManagerBuilder shardManagerBuilder = DefaultShardManagerBuilder.createDefault(config.token(), builder.intents)
-                .setHttpClient(new OkHttpClient())
-                .setStatus(config.onlineStatus())
-                .setStatusProvider(v -> config.onlineStatus())
-                .setShardsTotal(config.shards())
-                .setMemberCachePolicy(builder.memberCachePolicy)
-                .enableCache(builder.cacheFlags)
-                .setEventManagerProvider(v -> eventManager);
+        this.registerListener(this);
 
-        initActivities(shardManagerBuilder);
+        if (this.eventWaiter != null) {
+            this.registerListener(this.eventWaiter);
+        }
 
-        this.commandManager = builder.commandManager;
+        Runtime.getRuntime()
+                .addShutdownHook(new Thread(this::onShutdown));
 
-        shardManagerBuilder.addEventListeners(this, this.eventWaiter);
-        shardManagerBuilder.addEventListeners(builder.listeners.toArray());
+        LOGGER.info(
+                "Bot[{}] started successfully in {} ms!",
+                this.getClass()
+                        .getSimpleName(),
+                System.currentTimeMillis() - startupTime
+        );
+        this.onStart();
+    }
 
-        builder.builderActions.forEach(action -> action.accept(shardManagerBuilder));
-        this.shardManager = shardManagerBuilder.build();
-        builder.shardManActions.forEach(action -> action.accept(shardManager));
+    protected abstract void prepareLogin(
+            int shards,
+            @NotNull String token,
+            @NotNull Collection<GatewayIntent> intents,
+            @NotNull IntFunction<OnlineStatus> onlineStatus,
+            @NotNull IntFunction<Activity> activity,
+            @NotNull IntFunction<? extends IEventManager> eventManager
+    );
 
-        getJDA().retrieveApplicationInfo().queue(applicationInfo -> this.applicationInfo = applicationInfo);
-        LOGGER.info("Successfully launched Discord Bot in {}!", FormatUtils.formatDuration(System.currentTimeMillis() - startupTime));
-
-        onStart();
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            LOGGER.info("Shutting down Bot...");
-
-            if(!this.scheduler.isShutdown()) {
-                this.scheduler.shutdownNow();
-            }
-
-            this.onShutdown();
-        }));
+    /**
+     * Called during the login process, before any listeners are registered.
+     * <p>
+     * Override this method to perform configuration that depends on constructor arguments
+     * or other setup that must occur before the bot starts receiving events.
+     * <p>
+     * At this point, the command manager and other settings are already initialized
+     * and can be accessed via getter methods.
+     * <p>
+     * Example:
+     * <pre>{@code
+     * @Override
+     * protected void configure() {
+     *     registerCommand(new MyCommand(myService));
+     * }
+     * }</pre>
+     * <p>
+     * Default implementation does nothing.
+     */
+    protected void configure() {
+        // Default implementation - subclasses can override
     }
 
     protected abstract void onStart();
@@ -129,165 +207,197 @@ public abstract class DiscordBot<S extends BotSettings> {
 
     protected abstract void onShutdown();
 
-    public long getBotStartupTime() {
+    /**
+     * Gets the time (in milliseconds) when this bot was started.
+     *
+     * @return the time (in milliseconds) when this bot was started.
+     */
+    public long getLoginTime() {
+        requireLoggedIn();
         return this.startupTime;
     }
 
+    /**
+     * Gets the set of user IDs that belong to the owners of this bot.
+     *
+     * @return the set of user IDs that belong to the owners of this bot.
+     */
     @NotNull
-    public S getConfig() {
-        return this.config;
+    public Set<Long> getOwners() {
+        return this.owners;
     }
 
-    @NotNull
-    public IEventManager getEventManager() {
-        return this.eventManager;
+    /**
+     * Checks if this bot is locked to any guilds.
+     *
+     * @return {@code true} if this bot is locked to any guilds, {@code false} otherwise.
+     */
+    public boolean lockedToGuilds() {
+        return this.guilds != null && !this.guilds.isEmpty();
     }
 
-    @NotNull
-    public ShardManager getShardManager() {
-        return this.shardManager;
+    /**
+     * Gets the set of guild IDs that this bot is locked.
+     *
+     * @return the set of guild IDs, or {@code null} if this bot is not locked to any guilds.
+     */
+    @Nullable
+    public Set<Long> getGuilds() {
+        return this.guilds;
     }
 
-    @NotNull
-    public ApplicationInfo getApplicationInfo() {
-        return this.applicationInfo;
-    }
-
+    /**
+     * Gets the event waiter used by this bot.
+     *
+     * @return the event waiter used by this bot.
+     *
+     * @throws IllegalStateException if this bot is not using an event waiter.
+     */
     @NotNull
     public EventWaiter getEventWaiter() {
-        return this.eventWaiter;
+        return notNull(this.eventWaiter, "This bot is not using an event waiter!");
     }
 
-    public boolean useCommandManager() {
-        return this.commandManager != null;
-    }
 
+    /**
+     * Gets the set of user IDs that belong to the owners of this bot.
+     *
+     * @return the set of user IDs that belong to the owners of this bot.
+     */
     @NotNull
+    public ApplicationInfo getApplicationInfo() {
+        requireLoggedIn();
+        return notNull(this.applicationInfo, "Application info has not been retrieved yet!");
+    }
+
+    /**
+     * Gets the command manager used by this bot.
+     *
+     * @return the command manager used by this bot.
+     *
+     * @throws IllegalStateException if this bot is not using a command manager.
+     */
     public CommandManager getCommandManager() {
-        if (this.commandManager == null) {
-            throw new IllegalStateException("This bot instance does not use a CommandManager!");
-        }
-        return this.commandManager;
+        requireLoggedIn();
+        return notNull(this.commandManager, "This bot is not using a command manager!");
     }
 
-    public JDA getJDA() {
-        return Collector.of(shardManager.getShardCache().stream()).findFirst().orElseThrow(() -> new IllegalStateException("No JDA is ready yet!"));
+    /**
+     * Checks if the given user ID belongs to an owner of this bot.
+     *
+     * @param userId the user ID to check
+     *
+     * @return {@code true} if the given user ID belongs to an owner of this bot, {@code false} otherwise.
+     */
+    public boolean isOwner(long userId) {
+        return getOwners().contains(userId);
     }
 
-    public boolean isReady() {
-        return shardManager != null && Collector.of(shardManager.getShardCache().stream()).allMatch(jda -> jda.getStatus() == JDA.Status.CONNECTED);
-    }
+    /**
+     * Gets the total number of shards this bot is running with.
+     *
+     * @throws IllegalStateException if the bot has not been started yet.
+     */
+    public abstract int getShardCount();
 
-    public int getShardCount() {
-        return shardManager == null ? 0 : Collector.of(shardManager.getShardCache().stream()).filter(jda -> jda.getStatus() == JDA.Status.CONNECTED).count();
-    }
+    /**
+     * Checks if all shards of this bot are ready.
+     *
+     * @return {@code true} if all shards of this bot are ready, {@code false} otherwise.
+     */
+    public abstract boolean isReady();
 
-    public List<JDA> getShards() {
-        return shardManager == null ? Collections.emptyList() : Collector.of(shardManager.getShardCache().stream()).filter(jda -> jda.getStatus() == JDA.Status.CONNECTED).asList();
-    }
+    /**
+     * Registers the given listener to this bot's event manager.
+     *
+     * @param listener the listener to register
+     */
+    public abstract void registerListener(@NotNull Object listener);
 
-    public void onEachShard(@NotNull Consumer<? super JDA> action) {
-        shardManager.getShardCache().forEach(action);
-    }
+    /**
+     * Unregisters the given listener from this bot's event manager.
+     *
+     * @param listener the listener to unregister
+     */
+    public abstract void unregisterListener(@NotNull Object listener);
 
-    public User getSelfUser() {
-        return getJDA().getSelfUser();
-    }
-
-    public Member getSelfMember(@NotNull Guild guild) {
-        return guild.getMember(getSelfUser());
-    }
-
-    public boolean isOwner(long id) {
-        for (long ownerId : config.owners()) {
-            if (ownerId == id) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @SubscribeEvent
-    public void onReady(@NotNull ReadyEvent event) {
-        JDA jda = event.getJDA();
-        LOGGER.info("Shard {} is ready!", jda.getShardInfo().getShardId());
-
-        if(this.commandManager != null) {
-            this.commandManager.updateCommands(jda);
-        }
-
-        if (config.shards() == 1 || isReady()) {
-            onReady();
-        }
-
-        this.shardActions.forEach(action -> action.accept(jda));
-    }
-
-    @SubscribeEvent
-    public void onDisconnect(@NotNull SessionDisconnectEvent event) {
-        CloseCode code = event.getCloseCode();
-        String reason = (code == null) ? null : code.getMeaning();
-        LOGGER.info("Lost connection. Reason: {}", reason);
-    }
-
-    @SubscribeEvent
-    public void onReconnect(@NotNull SessionResumeEvent event) {
-        LOGGER.info("Reconnected successfully. RN: {}", event.getResponseNumber());
-    }
-
-    public void addListener(@NotNull Object listener) {
-        if (!isReady()) {
-            throw new IllegalStateException("Cannot add listeners before the bot is ready!");
-        }
-        shardManager.addEventListener(listener);
-    }
-
-    public void removeListener(@NotNull Object listener) {
-        if (!isReady()) {
-            throw new IllegalStateException("Cannot remove listeners before the bot is ready!");
-        }
-        shardManager.removeEventListener(listener);
-    }
-
-    private void initActivities(@NotNull DefaultShardManagerBuilder shardManagerBuilder) {
-        if (this.activities.isEmpty()) {
-            LOGGER.debug("No activities provided, skipping activity setup...");
+    /**
+     * Registers the given annotated class to this bot's command manager.
+     *
+     * @param command the annotated class to register
+     *
+     * @throws IllegalStateException if this bot is not using a command manager.
+     */
+    public void registerCommand(@NotNull Object command) {
+        if (command instanceof DiscordCommand) {
+            getCommandManager().register((DiscordCommand) command);
             return;
         }
 
-        if (this.activities.size() == 1) {
-            shardManagerBuilder.setActivity(this.activities.get(0).get());
-        } else {
+        if (command instanceof Class<?>) {
+            getCommandManager().addCommand((Class<?>) command);
+            return;
+        }
 
-            AtomicInteger index = new AtomicInteger();
+        getCommandManager().addCommand(command);
+    }
 
-            try {
+    @SubscribeEvent
+    private void onReady(@NotNull ReadyEvent event) {
+        JDA jda = event.getJDA();
+        LOGGER.debug("Shard {} is ready!", jda.getShardInfo()
+                .getShardId());
 
-                this.scheduler.scheduleAtFixedRate(() -> {
-                    shardManagerBuilder.setActivity(this.activities.get(index.getAndIncrement()).get());
+        jda.retrieveApplicationInfo()
+                .queue(
+                        info -> this.applicationInfo = info,
+                        error -> LOGGER.error("Failed to retrieve bot application info!", error)
+                );
 
-                    if (index.get() >= this.activities.size()) {
-                        index.set(0);
-                    }
-                }, 0, this.activityUpdateRate, TimeUnit.SECONDS);
+        if (this.commandManager != null && this.autoCommitCommands) {
+            this.commandManager.commitCommands(jda, this.guilds);
+        }
 
-            } catch (Throwable e) {
-                LOGGER.error("Failed to schedule activity updates!", e);
-                shardManagerBuilder.setActivity(this.activities.get(0).get());
-            }
+        if (getShardCount() == 1 || isReady()) {
+            this.onReady();
         }
     }
 
     @SubscribeEvent
-    public void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
+    private void onDisconnect(@NotNull SessionDisconnectEvent event) {
+        CloseCode code = event.getCloseCode();
+        String reason = (code == null) ? "Unknown" : code.getMeaning();
+        LOGGER.debug("Lost connection. Reason: {}", reason);
+    }
+
+    @SubscribeEvent
+    private void onReconnect(@NotNull SessionResumeEvent event) {
+        LOGGER.debug("Reconnected successfully. RN: {}", event.getResponseNumber());
+    }
+
+    @SubscribeEvent
+    private void onSlashCommandInteraction(@NotNull SlashCommandInteractionEvent event) {
         if (this.commandManager == null) return;
-        this.commandManager.handleCommand(event);
+        this.commandManager.handleCommand(event, this);
     }
 
     @SubscribeEvent
     public void onMessage(@NotNull MessageReceivedEvent event) {
         if (this.commandManager == null) return;
-        this.commandManager.handlePrefixCommand(event);
+        this.commandManager.handlePrefixCommand(event, this);
+    }
+
+    private void requireLoggedIn() {
+        if (!this.loggedIn) {
+            throw new IllegalStateException("This bot has not been logged in yet!");
+        }
+    }
+
+    private <T> T notNull(@Nullable T obj, @NotNull String message) {
+        if (obj == null) {
+            throw new IllegalStateException(message);
+        }
+        return obj;
     }
 
 }

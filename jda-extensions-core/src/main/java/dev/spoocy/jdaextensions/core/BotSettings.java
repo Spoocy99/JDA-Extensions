@@ -1,12 +1,17 @@
 package dev.spoocy.jdaextensions.core;
 
-import dev.spoocy.utils.common.log.LogLevel;
+import dev.spoocy.jdaextensions.commands.manager.CommandManager;
+import dev.spoocy.jdaextensions.event.EventWaiter;
 import net.dv8tion.jda.api.OnlineStatus;
+import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.hooks.IEventManager;
+import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.Set;
+import java.util.function.IntFunction;
 
 /**
  * @author Spoocy99 | GitHub: Spoocy99
@@ -14,89 +19,127 @@ import java.util.List;
 
 public interface BotSettings {
 
-    static Builder builder() {
-        return new Builder();
+    /**
+     * Creates a new {@link BotSettingsBuilder} instance.
+     *
+     * @return a new {@link BotSettingsBuilder} instance.
+     */
+    static BotSettingsBuilder builder() {
+        return new BotSettingsBuilder();
     }
 
-    List<Long> owners();
+    /**
+     * Creates a new {@link BotSettingsBuilder} instance with the specified token.
+     *
+     * @param token the token of the bot.
+     * @return a new {@link BotSettingsBuilder} instance.
+     */
+    static BotSettingsBuilder builder(@NotNull String token) {
+        return new BotSettingsBuilder(token);
+    }
 
-    LogLevel logLevel();
-
+    /**
+     * Gets the token of the bot.
+     *
+     * @return the token of the bot.
+     */
+    @NotNull
     String token();
 
+    /**
+     * Gets the gateway intents to enable for the bot.
+     *
+     * @return the gateway intents to enable for the bot.
+     */
+    @NotNull
+    Collection<GatewayIntent> intents();
+
+    /**
+     * Gets whether the bot should automatically log in on startup.
+     *
+     * @return {@code true} if the bot should automatically log in on startup, {@code false} otherwise.
+     */
+    boolean autoLogin();
+
+    /**
+     * Gets the IDs of the bot owners.
+     *
+     * @return the IDs of the bot owners.
+     */
+    @NotNull
+    Set<Long> owners();
+
+    /**
+     * Locks the bot to the specified guilds.
+     * This is useful for testing as commands will only be registered in these guilds.
+     *
+     * @return the IDs of the guilds to lock the bot to, or {@code null} to not lock the bot to any guilds.
+     */
+    @Nullable
+    Set<Long> guilds();
+
+    /**
+     * Gets the number of shards to use for the bot.
+     *
+     * @return the number of shards to use for the bot.
+     */
     int shards();
 
-    OnlineStatus onlineStatus();
+    /**
+     * Gets the online status provider to use for the bot.
+     *
+     * @return the online status provider to use for the bot.
+     */
+    @NotNull
+    IntFunction<OnlineStatus> onlineStatus();
 
-    class Builder implements BotSettings {
+    /**
+     * Gets the activity provider to use for the bot.
+     *
+     * @return the activity provider to use for the bot.
+     */
+    @NotNull
+    IntFunction<Activity> activity();
 
-        private Collection<Long> owners = new ArrayList<>();
-        private LogLevel logLevel = LogLevel.INFO;
-        private String token = "DISCORD_BOT_TOKEN";
-        private int shards = 1;
-        private OnlineStatus onlineStatus = OnlineStatus.ONLINE;
+    /**
+     * Gets the event manager provider to use for the bot.
+     *
+     * @return the event manager provider to use for the bot.
+     */
+    @NotNull
+    IntFunction<? extends IEventManager> eventManager();
 
-        public Builder owners(@NotNull Collection<Long> ownerIds) {
-            this.owners = ownerIds;
-            return this;
-        }
+    /**
+     * Gets the global event waiter to use for the bot.
+     *
+     * @return the event waiter to use for the bot, or null if no event waiter should be used.
+     */
+    @Nullable
+    EventWaiter eventWaiter();
 
-        public Builder owners(long @NotNull ... ownerIds) {
-            for (long ownerId : ownerIds) {
-                this.owners.add(ownerId);
-            }
-            return this;
-        }
+    /**
+     * Gets whether the bot should automatically commit commands on startup.
+     *
+     * @return {@code true} if the bot should automatically commit commands on startup, {@code false} otherwise.
+     */
+    boolean autoCommitCommands();
 
-        public Builder addOwner(long ownerId) {
-            this.owners.add(ownerId);
-            return this;
-        }
+    /**
+     * Gets the command manager to use for the bot.
+     *
+     * @return the command manager to use for the bot, or null if no command manager should be used.
+     */
+    @Nullable
+    CommandManager commandManager();
 
-        public Builder logLevel(@NotNull LogLevel logLevel) {
-            this.logLevel = logLevel;
-            return this;
-        }
-
-        public Builder token(String token) {
-            this.token = token;
-            return this;
-        }
-
-        public Builder shards(int shards) {
-            this.shards = shards;
-            return this;
-        }
-
-        public Builder onlineStatus(@NotNull OnlineStatus onlineStatus) {
-            this.onlineStatus = onlineStatus;
-            return this;
-        }
-
-        @Override
-        public List<Long> owners() {
-            return List.copyOf(this.owners);
-        }
-
-        @Override
-        public LogLevel logLevel() {
-            return this.logLevel;
-        }
-
-        @Override
-        public String token() {
-            return this.token;
-        }
-
-        @Override
-        public int shards() {
-            return this.shards;
-        }
-
-        @Override
-        public OnlineStatus onlineStatus() {
-            return this.onlineStatus;
-        }
+    /**
+     * Creates an immutable copy of this BotSettings instance.
+     *
+     * @return an immutable copy of this BotSettings instance.
+     */
+    @NotNull
+    default ImmutableBotSettings immutable() {
+        return new ImmutableBotSettings(this);
     }
 
 }
