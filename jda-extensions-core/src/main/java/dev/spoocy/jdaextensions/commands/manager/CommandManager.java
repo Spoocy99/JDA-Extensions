@@ -127,6 +127,11 @@ public interface CommandManager {
     void commitCommands(@NotNull JDA jda, @Nullable Set<Long> guildIds);
 
     /**
+     * Shuts down the command manager and any underlying thread pools.
+     */
+    default void shutdown() { }
+
+    /**
      * Handles a slash command interaction event.
      *
      * @param event the slash command interaction event to handle.

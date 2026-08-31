@@ -8,8 +8,8 @@ import dev.spoocy.utils.common.misc.Args;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.hooks.IEventManager;
-import net.dv8tion.jda.api.hooks.InterfacedEventManager;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +27,7 @@ public class BotSettingsBuilder {
 
     private String token;
     private Collection<GatewayIntent> intents = Collections.emptyList();
+    private Collection<CacheFlag> cacheFlags = Collections.emptyList();
     private boolean autoLogin = true;
     private Set<Long> owners = Collections.emptySet();
     private Set<Long> guilds = null;
@@ -87,9 +88,33 @@ public class BotSettingsBuilder {
      * @return this builder instance for chaining.
      */
     @NotNull
-    public BotSettingsBuilder setIntents(@NotNull GatewayIntent... intents) {
-        this.intents = Arrays.asList(Args.notNull(intents, "Intents cannot be null"));
+    public BotSettingsBuilder setIntents(@NotNull GatewayIntent intent, @NotNull GatewayIntent... intents) {
+        return setIntents(EnumSet.of(intent, intents));
+    }
+
+    /**
+     * Sets the cache flags to enable for the bot.
+     *
+     * @param cacheFlags the cache flags to enable.
+     *
+     * @return this builder instance for chaining.
+     */
+    @NotNull
+    public BotSettingsBuilder setCacheFlags(@NotNull Collection<CacheFlag> cacheFlags) {
+        this.cacheFlags = Args.notNull(cacheFlags, "Cache flags cannot be null");
         return this;
+    }
+
+    /**
+     * Sets the cache flags to enable for the bot.
+     *
+     * @param cacheFlags the cache flags to enable.
+     *
+     * @return this builder instance for chaining.
+     */
+    @NotNull
+    public BotSettingsBuilder setCacheFlags(@NotNull CacheFlag cacheFlag, @NotNull CacheFlag... cacheFlags) {
+        return setCacheFlags(EnumSet.of(cacheFlag, cacheFlags));
     }
 
     /**
@@ -319,6 +344,7 @@ public class BotSettingsBuilder {
         return new ImmutableBotSettings(
                 this.token,
                 this.intents,
+                this.cacheFlags,
                 this.autoLogin,
                 this.owners,
                 this.guilds,
@@ -331,5 +357,6 @@ public class BotSettingsBuilder {
                 this.commandManager
         );
     }
+
 }
 

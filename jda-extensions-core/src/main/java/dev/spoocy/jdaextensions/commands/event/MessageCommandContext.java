@@ -1,7 +1,6 @@
 package dev.spoocy.jdaextensions.commands.event;
 
 import dev.spoocy.jdaextensions.commands.arguments.ProvidedArgument;
-import dev.spoocy.jdaextensions.commands.arguments.WrappedOption;
 import dev.spoocy.jdaextensions.commands.manager.CommandManager;
 import dev.spoocy.jdaextensions.commands.message.ReplyAction;
 import dev.spoocy.jdaextensions.core.DiscordBot;
@@ -40,13 +39,13 @@ public class MessageCommandContext extends AbstractCommandContext {
     private final String subcommandName;
 
     private final MessageReceivedEvent event;
-    private final List<WrappedOption> arguments;
+    private final List<ProvidedArgument> arguments;
 
     public MessageCommandContext(
             @NotNull String fullName,
             @NotNull String commandName,
             @Nullable String subcommandName,
-            @NotNull List<WrappedOption> arguments,
+            @NotNull List<? extends ProvidedArgument> arguments,
             @NotNull DiscordBot bot,
             @NotNull CommandManager manager,
             @NotNull MessageReceivedEvent event
@@ -55,7 +54,7 @@ public class MessageCommandContext extends AbstractCommandContext {
         this.fullName = fullName;
         this.commandName = commandName;
         this.subcommandName = subcommandName;
-        this.arguments = arguments;
+        this.arguments = List.copyOf(arguments);
         this.event = event;
     }
 
@@ -72,11 +71,6 @@ public class MessageCommandContext extends AbstractCommandContext {
     @Override
     public @Nullable DataObject getRawData() {
         return this.event.getRawData();
-    }
-
-    @Override
-    public @NotNull DiscordBot getProvidingBot() {
-        return null;
     }
 
     @NotNull
@@ -191,7 +185,7 @@ public class MessageCommandContext extends AbstractCommandContext {
     }
 
     @Override
-    public ReplyAction reply(@NotNull MessageEmbed embed, MessageEmbed... other) {
+    public ReplyAction reply(@NotNull MessageEmbed embed, @NotNull MessageEmbed... other) {
         MessageCreateBuilder builder = new MessageCreateBuilder().addEmbeds(embed);
         for (MessageEmbed e : other) {
             builder.addEmbeds(e);

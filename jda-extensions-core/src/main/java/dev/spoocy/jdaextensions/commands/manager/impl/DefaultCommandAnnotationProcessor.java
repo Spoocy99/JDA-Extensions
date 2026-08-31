@@ -3,7 +3,7 @@ package dev.spoocy.jdaextensions.commands.manager.impl;
 import dev.spoocy.jdaextensions.commands.annotations.Command;
 import dev.spoocy.jdaextensions.commands.annotations.Permissions;
 import dev.spoocy.jdaextensions.commands.arguments.impl.AbstractArgument;
-import dev.spoocy.jdaextensions.commands.cooldown.*;
+import dev.spoocy.jdaextensions.commands.cooldown.Cooldown;
 import dev.spoocy.jdaextensions.commands.event.CommandContext;
 import dev.spoocy.jdaextensions.commands.manager.CommandAnnotationProcessor;
 import dev.spoocy.jdaextensions.commands.permission.CommandPermission;
@@ -16,7 +16,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Parameter;
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 /**
@@ -36,9 +38,13 @@ public class DefaultCommandAnnotationProcessor implements CommandAnnotationProce
     private final boolean checkForKotlinSingletons;
 
     public DefaultCommandAnnotationProcessor(@NotNull Builder builder) {
-        this.allowStaticContext = builder.allowStaticContext;
-        this.allowInstanceContext = builder.allowInstanceContext;
-        this.checkForKotlinSingletons = builder.kotlinSupport;
+        this(builder.allowStaticContext, builder.allowInstanceContext, builder.kotlinSupport);
+    }
+
+    protected DefaultCommandAnnotationProcessor(boolean allowStaticContext, boolean allowInstanceContext, boolean checkForKotlinSingletons) {
+        this.allowStaticContext = allowStaticContext;
+        this.allowInstanceContext = allowInstanceContext;
+        this.checkForKotlinSingletons = checkForKotlinSingletons;
     }
 
     @Override
@@ -128,7 +134,7 @@ public class DefaultCommandAnnotationProcessor implements CommandAnnotationProce
 
     }
 
-    private <T> CommandNodeData parseCommandNode(
+    protected <T> CommandNodeData parseCommandNode(
             @Nullable T executingInstance,
             @NotNull MethodAccessor method,
             @NotNull CommandData parent,
@@ -141,9 +147,7 @@ public class DefaultCommandAnnotationProcessor implements CommandAnnotationProce
     ) {
 
         AbstractArgument[] arguments = parseArguments(method);
-        Consumer<CommandContext> executor = executingInstance == null
-                ? CommandInvoker.fromStatic(arguments, method)
-                : CommandInvoker.fromInstance(arguments, method, executingInstance);
+        Consumer<CommandContext> executor = createExecutor(executingInstance, method, arguments);
 
         return new CommandNodeData(
                 parent,
@@ -161,8 +165,18 @@ public class DefaultCommandAnnotationProcessor implements CommandAnnotationProce
 
     }
 
+    protected Consumer<CommandContext> createExecutor(
+            @Nullable Object executingInstance,
+            @NotNull MethodAccessor method,
+            @NotNull AbstractArgument[] arguments
+    ) {
+        return executingInstance == null
+                ? CommandInvoker.fromStatic(arguments, method)
+                : CommandInvoker.fromInstance(arguments, method, executingInstance);
+    }
+
     @NotNull
-    private Cooldown parseCooldown(@NotNull MethodAccessor method) {
+    protected Cooldown parseCooldown(@NotNull MethodAccessor method) {
         dev.spoocy.jdaextensions.commands.annotations.Cooldown annotation
                 = method.getAnnotation(dev.spoocy.jdaextensions.commands.annotations.Cooldown.class);
 
@@ -174,7 +188,7 @@ public class DefaultCommandAnnotationProcessor implements CommandAnnotationProce
     }
 
     @NotNull
-    private CommandPermission[] parsePermissions(@NotNull MethodAccessor method) {
+    protected CommandPermission[] parsePermissions(@NotNull MethodAccessor method) {
         List<CommandPermission> perms = new ArrayList<>();
 
         Permissions permissionsAnnotation = method.getAnnotation(Permissions.class);
@@ -199,10 +213,10 @@ public class DefaultCommandAnnotationProcessor implements CommandAnnotationProce
     }
 
     @NotNull
-    private AbstractArgument[] parseArguments(@NotNull MethodAccessor method) {
+    protected AbstractArgument[] parseArguments(@NotNull MethodAccessor method) {
         List<AbstractArgument> arguments = new ArrayList<>();
 
-        if(method.getMethod().getParameterCount() == 0) {
+        if (method.getMethod().getParameterCount() == 0) {
             throw new IllegalStateException("Command method must have at least one parameter of type CommandContext!");
         }
 
@@ -210,8 +224,10 @@ public class DefaultCommandAnnotationProcessor implements CommandAnnotationProce
             throw new IllegalStateException("First parameter of command method must be of type CommandContext!");
         }
 
+        int parameterCount = getParameterCount(method);
+
         // first parameter is always CommandContext, so we can skip it
-        for (int i = 1; i < method.getMethod().getParameterCount(); i++) {
+        for (int i = 1; i < parameterCount; i++) {
             Parameter param = method.getMethod().getParameters()[i];
 
             AbstractArgument argument = ArgumentParser.parseArgumentFromParam(
@@ -224,6 +240,10 @@ public class DefaultCommandAnnotationProcessor implements CommandAnnotationProce
         }
 
         return arguments.toArray(AbstractArgument[]::new);
+    }
+
+    protected int getParameterCount(@NotNull MethodAccessor method) {
+        return method.getMethod().getParameterCount();
     }
 
 

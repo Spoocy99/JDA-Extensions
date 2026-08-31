@@ -6,7 +6,7 @@
 
     <groupId>dev.spoocy</groupId>
     <artifactId>jda-extensions</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
     <packaging>pom</packaging>
 
     <licenses>
@@ -63,31 +63,25 @@
         <dependency>
             <groupId>org.jetbrains</groupId>
             <artifactId>annotations</artifactId>
-            <version>26.0.2-1</version>
+            <version>26.1.0</version>
         </dependency>
 
         <dependency>
             <groupId>dev.spoocy.utils</groupId>
             <artifactId>common-utils</artifactId>
-            <version>1.0.12</version>
-        </dependency>
-
-        <dependency>
-            <groupId>dev.spoocy.utils</groupId>
-            <artifactId>config-utils</artifactId>
-            <version>1.0.12</version>
+            <version>1.0.13</version>
         </dependency>
 
         <dependency>
             <groupId>dev.spoocy.utils</groupId>
             <artifactId>reflection-utils</artifactId>
-            <version>1.0.12</version>
+            <version>1.0.13</version>
         </dependency>
 
         <dependency>
             <groupId>net.dv8tion</groupId>
             <artifactId>JDA</artifactId>
-            <version>6.3.1</version>
+            <version>6.5.0</version>
 
             <exclusions>
                 <exclusion>
@@ -112,14 +106,14 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>5.16.0</version>
+            <version>5.23.0</version>
             <scope>test</scope>
         </dependency>
 
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-junit-jupiter</artifactId>
-            <version>5.16.0</version>
+            <version>5.23.0</version>
             <scope>test</scope>
         </dependency>
 

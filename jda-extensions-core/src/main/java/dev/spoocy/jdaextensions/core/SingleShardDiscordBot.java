@@ -9,9 +9,11 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.hooks.IEventManager;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Set;
 import java.util.function.IntFunction;
 
 /**
@@ -31,6 +33,7 @@ public abstract class SingleShardDiscordBot extends DiscordBot {
             int shards,
             @NotNull String token,
             @NotNull Collection<GatewayIntent> intents,
+            @NotNull Collection<CacheFlag> cacheFlags,
             @NotNull IntFunction<OnlineStatus> onlineStatus,
             @NotNull IntFunction<Activity> activity,
             @NotNull IntFunction<? extends IEventManager> eventManager
@@ -42,6 +45,8 @@ public abstract class SingleShardDiscordBot extends DiscordBot {
 
         JDABuilder builder = JDABuilder.createDefault(token)
                 .setEnabledIntents(intents)
+                .disableCache(Set.of(CacheFlag.values()))
+                .enableCache(cacheFlags)
                 .setEventManager(eventManager.apply(0))
                 .setStatus(onlineStatus.apply(0))
                 .setActivity(activity.apply(0))

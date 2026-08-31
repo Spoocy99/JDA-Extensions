@@ -5,6 +5,7 @@ import dev.spoocy.jdaextensions.commands.structure.DiscordCommand;
 import dev.spoocy.jdaextensions.commands.structure.impl.CommandData;
 import net.dv8tion.jda.api.interactions.InteractionContextType;
 import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -17,11 +18,13 @@ import java.util.Set;
 
 public class CommandTree extends AbstractCommandTree<CommandTree> implements GroupChainable<CommandTree>, CommandChainable<CommandTree> {
 
-    public static SubCommand command(@NotNull String name, @NotNull String description) {
+    @Contract("_, _ -> new")
+    public static @NotNull SubCommand command(@NotNull String name, @NotNull String description) {
         return new SubCommand(name, description);
     }
 
-    public static SubCommandGroup group(@NotNull String name, @NotNull String description) {
+    @Contract("_, _ -> new")
+    public static @NotNull SubCommandGroup group(@NotNull String name, @NotNull String description) {
         return new SubCommandGroup(name, description);
     }
 

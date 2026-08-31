@@ -98,22 +98,22 @@ class AnnotatedCoroutineEventListener(
         for (classOfEvent in ClassWalker.walk(event.javaClass)) {
             val methods: MutableList<SuspendMethodInfo> = listeners[classOfEvent] ?: continue
 
-            for (methodInfo in methods) {
+            for ((function, timeout) in methods) {
                 scope.launch {
                     try {
 
-                        if (methodInfo.timeout.isInfinite()) {
-                            methodInfo.function.callSuspend(holder, event)
+                        if (timeout.isInfinite()) {
+                            function.callSuspend(holder, event)
                         } else {
-                            withTimeout(methodInfo.timeout) {
-                                methodInfo.function.callSuspend(holder, event)
+                            withTimeout(timeout) {
+                                function.callSuspend(holder, event)
                             }
                         }
 
                     } catch (e: Exception) {
                         log.error(
                             "Failed to invoke coroutine event listener method {} in class {} for event {}.",
-                            methodInfo.function.name,
+                            function.name,
                             holder::class.simpleName,
                             event::class.simpleName,
                             e

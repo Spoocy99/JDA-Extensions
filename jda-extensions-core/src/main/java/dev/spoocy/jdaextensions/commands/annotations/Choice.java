@@ -8,6 +8,10 @@ import java.lang.annotation.*;
 
 public class Choice {
 
+    private Choice() {
+        throw new IllegalStateException("Utility class");
+    }
+
     @Target(ElementType.METHOD)
     @Retention(RetentionPolicy.RUNTIME)
     @Repeatable(Texts.class)

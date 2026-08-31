@@ -2,9 +2,8 @@ package dev.spoocy.jdaextensions.commands.structure;
 
 import dev.spoocy.jdaextensions.commands.arguments.Argument;
 import dev.spoocy.jdaextensions.commands.cooldown.Cooldown;
-import dev.spoocy.jdaextensions.commands.permission.CommandPermission;
 import dev.spoocy.jdaextensions.commands.event.CommandContext;
-import dev.spoocy.utils.common.scheduler.task.Task;
+import dev.spoocy.jdaextensions.commands.permission.CommandPermission;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,8 +46,6 @@ public interface CommandNode {
     @NotNull
     Cooldown cooldown();
 
-    Task<Void> execute(@NotNull CommandContext context);
-
-    Task<Void> executeAsync(@NotNull CommandContext context);
+    void execute(@NotNull CommandContext context);
 
 }

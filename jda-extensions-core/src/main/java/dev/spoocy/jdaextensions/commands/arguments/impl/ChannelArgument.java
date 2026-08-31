@@ -1,8 +1,6 @@
 package dev.spoocy.jdaextensions.commands.arguments.impl;
 
-import dev.spoocy.jdaextensions.commands.arguments.ProvidedArgument;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
-import net.dv8tion.jda.api.entities.channel.unions.GuildChannelUnion;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.jetbrains.annotations.NotNull;

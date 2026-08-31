@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.hooks.IEventManager;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +54,14 @@ public interface BotSettings {
      */
     @NotNull
     Collection<GatewayIntent> intents();
+
+    /**
+     * Gets the cache flags to enable for the bot.
+     *
+     * @return the gateway intents to enable for the bot.
+     */
+    @NotNull
+    Collection<CacheFlag> cacheFlags();
 
     /**
      * Gets whether the bot should automatically log in on startup.

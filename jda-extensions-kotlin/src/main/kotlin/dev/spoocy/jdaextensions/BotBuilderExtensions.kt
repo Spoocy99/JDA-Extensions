@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.OnlineStatus
 import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.hooks.IEventManager
 import net.dv8tion.jda.api.requests.GatewayIntent
+import net.dv8tion.jda.api.utils.cache.CacheFlag
 import java.util.function.IntFunction
 
 /**
@@ -40,6 +41,19 @@ var BotSettingsBuilder.intents: Collection<GatewayIntent>
         this.setIntents(value)
     }
 
+/**
+ * The cache flags to enable for the bot.
+ */
+var BotSettingsBuilder.cacheFlags: Collection<CacheFlag>
+    @Deprecated("Write-only property", level = DeprecationLevel.HIDDEN)
+    get() = throw UnsupportedOperationException("Write-only property")
+    set(value) {
+        this.setCacheFlags(value)
+    }
+
+/**
+ * @see [BotSettingsBuilder.setAutoLogin]
+ */
 var BotSettingsBuilder.autoLogin: Boolean
     @Deprecated("Write-only property", level = DeprecationLevel.HIDDEN)
     get() = throw UnsupportedOperationException("Write-only property")

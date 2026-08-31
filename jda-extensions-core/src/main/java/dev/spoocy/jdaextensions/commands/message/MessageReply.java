@@ -1,12 +1,11 @@
 package dev.spoocy.jdaextensions.commands.message;
+
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.components.MessageTopLevelComponent;
 import net.dv8tion.jda.api.components.tree.ComponentTree;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.interactions.callbacks.IReplyCallback;
-import net.dv8tion.jda.api.modals.Modal;
-import net.dv8tion.jda.api.requests.restaction.interactions.ModalCallbackAction;
 import net.dv8tion.jda.api.utils.FileUpload;
 import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 import net.dv8tion.jda.api.utils.messages.MessagePollData;
@@ -41,7 +40,7 @@ public interface MessageReply {
     /**
      * @see IReplyCallback#replyEmbeds(MessageEmbed, MessageEmbed...)
      */
-    ReplyAction reply(@NotNull MessageEmbed embed, MessageEmbed... other);
+    ReplyAction reply(@NotNull MessageEmbed embed, @NotNull MessageEmbed... other);
 
     /**
      * @see IReplyCallback#replyEmbeds(Collection)

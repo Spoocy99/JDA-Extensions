@@ -1,6 +1,5 @@
 package dev.spoocy.jdaextensions.core;
 
-import dev.spoocy.jdaextensions.event.EventWaiter;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
@@ -11,11 +10,12 @@ import net.dv8tion.jda.api.hooks.IEventManager;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder;
 import net.dv8tion.jda.api.sharding.ShardManager;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.IntFunction;
 
@@ -37,6 +37,7 @@ public abstract class ShardedDiscordBot extends DiscordBot {
             int shards,
             @NotNull String token,
             @NotNull Collection<GatewayIntent> intents,
+            @NotNull Collection<CacheFlag> cacheFlags,
             @NotNull IntFunction<OnlineStatus> onlineStatus,
             @NotNull IntFunction<Activity> activity,
             @NotNull IntFunction<? extends IEventManager> eventManager
@@ -44,6 +45,8 @@ public abstract class ShardedDiscordBot extends DiscordBot {
         this.expectedShardCount = shards;
 
         DefaultShardManagerBuilder shardManagerBuilder = DefaultShardManagerBuilder.createDefault(token, intents)
+                .disableCache(Set.of(CacheFlag.values()))
+                .enableCache(cacheFlags)
                 .setShardsTotal(shards)
                 .setEventManagerProvider(eventManager)
                 .addEventListeners(this)

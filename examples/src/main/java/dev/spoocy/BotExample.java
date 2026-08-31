@@ -6,16 +6,18 @@ import dev.spoocy.jdaextensions.commands.manager.impl.DefaultCommandManager;
 import dev.spoocy.jdaextensions.commands.tree.CommandTree;
 import dev.spoocy.jdaextensions.core.BotSettings;
 import dev.spoocy.jdaextensions.core.SingleShardDiscordBot;
-import net.dv8tion.jda.api.JDA;
+import dev.spoocy.jdaextensions.event.EventWaiter;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.hooks.SubscribeEvent;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Duration;
+import java.util.concurrent.Executors;
 
 /**
  * @author Spoocy99 | GitHub: Spoocy99
@@ -26,9 +28,21 @@ public class BotExample extends SingleShardDiscordBot {
     public static void main(String[] args) {
 
         BotSettings settings = BotSettings.builder()
+                .setToken("YOUR_BOT_TOKEN_HERE")
                 .setActivity(i -> Activity.playing("Testing..."))
+
+                // enable intents
                 .setIntents(GatewayIntent.MESSAGE_CONTENT, GatewayIntent.GUILD_MESSAGES)
-                .setAutoLogin(false) // disable auto-login, have to manually call login() after creating the bot instance
+
+                // enable matching caches for intents
+                .setCacheFlags(CacheFlag.ACTIVITY, CacheFlag.MEMBER_OVERRIDES)
+
+                // disable auto-login, have to manually call login() after creating the bot instance
+                .setAutoLogin(false)
+
+                // because we want to use it in a command
+                .setEventWaiter(new EventWaiter(Executors.newScheduledThreadPool(1), true))
+
                 .setCommandManager(
                         DefaultCommandManager.builder()
                                 // Add commands using the CommandTree builder

@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.OnlineStatus;
 import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.hooks.IEventManager;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ public class ImmutableBotSettings implements BotSettings {
 
     private final String token;
     private final Collection<GatewayIntent> intents;
+    private final Collection<CacheFlag> cacheFlags;
     private final boolean autoLogin;
     private final Set<Long> owners;
     private final Set<Long> guilds;
@@ -37,6 +39,7 @@ public class ImmutableBotSettings implements BotSettings {
         this(
                 settings.token(),
                 settings.intents(),
+                settings.cacheFlags(),
                 settings.autoLogin(),
                 settings.owners(),
                 settings.guilds(),
@@ -53,6 +56,7 @@ public class ImmutableBotSettings implements BotSettings {
     public ImmutableBotSettings(
             @NotNull String token,
             @NotNull Collection<GatewayIntent> intents,
+            @NotNull Collection<CacheFlag> cacheFlags,
             boolean autoLogin,
             @NotNull Set<Long> owners,
             @Nullable Set<Long> guilds,
@@ -66,6 +70,7 @@ public class ImmutableBotSettings implements BotSettings {
     ) {
         this.token = token;
         this.intents = Collections.unmodifiableCollection(intents);
+        this.cacheFlags = Collections.unmodifiableCollection(cacheFlags);
         this.autoLogin = autoLogin;
         this.owners = Collections.unmodifiableSet(owners);
         this.guilds = guilds != null ? Collections.unmodifiableSet(guilds) : null;
@@ -88,6 +93,11 @@ public class ImmutableBotSettings implements BotSettings {
     @NotNull
     public Collection<GatewayIntent> intents() {
         return this.intents;
+    }
+
+    @Override
+    public @NotNull Collection<CacheFlag> cacheFlags() {
+        return this.cacheFlags;
     }
 
     @Override
@@ -130,7 +140,7 @@ public class ImmutableBotSettings implements BotSettings {
     }
 
     @Override
-    @NotNull
+    @Nullable
     public EventWaiter eventWaiter() {
         return this.eventWaiter;
     }

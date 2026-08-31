@@ -17,6 +17,7 @@ import net.dv8tion.jda.api.hooks.IEventManager;
 import net.dv8tion.jda.api.hooks.SubscribeEvent;
 import net.dv8tion.jda.api.requests.CloseCode;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +36,7 @@ public abstract class DiscordBot {
 
     private final String token;
     private final Collection<GatewayIntent> intents;
+    private final Collection<CacheFlag> cacheFlags;
     private final Set<Long> owners;
     private final Set<Long> guilds;
     private final int shards;
@@ -82,6 +84,7 @@ public abstract class DiscordBot {
         this(
                 settings.token(),
                 settings.intents(),
+                settings.cacheFlags(),
                 settings.autoLogin(),
                 settings.owners(),
                 settings.guilds(),
@@ -98,6 +101,7 @@ public abstract class DiscordBot {
     public DiscordBot(
             @NotNull String token,
             @NotNull Collection<GatewayIntent> intents,
+            @NotNull Collection<CacheFlag> cacheFlags,
             boolean autoLogin,
             @NotNull Set<Long> owners,
             @Nullable Set<Long> guilds,
@@ -111,6 +115,7 @@ public abstract class DiscordBot {
     ) {
         this.token = token;
         this.intents = Collections.unmodifiableCollection(intents);
+        this.cacheFlags = Collections.unmodifiableCollection(cacheFlags);
         this.owners = Collections.unmodifiableSet(owners);
         this.guilds = guilds != null ? Collections.unmodifiableSet(guilds) : null;
         this.shards = shards;
@@ -146,6 +151,7 @@ public abstract class DiscordBot {
                 this.shards,
                 this.token,
                 this.intents,
+                this.cacheFlags,
                 this.onlineStatus,
                 this.activity,
                 this.eventManager
@@ -173,6 +179,7 @@ public abstract class DiscordBot {
             int shards,
             @NotNull String token,
             @NotNull Collection<GatewayIntent> intents,
+            @NotNull Collection<CacheFlag> cacheFlags,
             @NotNull IntFunction<OnlineStatus> onlineStatus,
             @NotNull IntFunction<Activity> activity,
             @NotNull IntFunction<? extends IEventManager> eventManager
@@ -367,12 +374,12 @@ public abstract class DiscordBot {
     private void onDisconnect(@NotNull SessionDisconnectEvent event) {
         CloseCode code = event.getCloseCode();
         String reason = (code == null) ? "Unknown" : code.getMeaning();
-        LOGGER.debug("Lost connection. Reason: {}", reason);
+        LOGGER.trace("Lost connection. Reason: {}", reason);
     }
 
     @SubscribeEvent
     private void onReconnect(@NotNull SessionResumeEvent event) {
-        LOGGER.debug("Reconnected successfully. RN: {}", event.getResponseNumber());
+        LOGGER.trace("Reconnected successfully. RN: {}", event.getResponseNumber());
     }
 
     @SubscribeEvent

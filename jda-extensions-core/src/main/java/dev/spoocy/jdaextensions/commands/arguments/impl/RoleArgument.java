@@ -1,7 +1,5 @@
 package dev.spoocy.jdaextensions.commands.arguments.impl;
 
-import dev.spoocy.jdaextensions.commands.arguments.ProvidedArgument;
-import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import org.jetbrains.annotations.NotNull;

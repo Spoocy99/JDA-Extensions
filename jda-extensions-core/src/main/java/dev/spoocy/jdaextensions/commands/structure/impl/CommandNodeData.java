@@ -1,13 +1,12 @@
 package dev.spoocy.jdaextensions.commands.structure.impl;
 
+import dev.spoocy.jdaextensions.commands.arguments.Argument;
 import dev.spoocy.jdaextensions.commands.arguments.impl.AbstractArgument;
 import dev.spoocy.jdaextensions.commands.cooldown.Cooldown;
+import dev.spoocy.jdaextensions.commands.event.CommandContext;
 import dev.spoocy.jdaextensions.commands.permission.CommandPermission;
-import dev.spoocy.jdaextensions.commands.arguments.Argument;
 import dev.spoocy.jdaextensions.commands.structure.CommandNode;
 import dev.spoocy.jdaextensions.commands.structure.CommandNodeHolder;
-import dev.spoocy.jdaextensions.commands.event.CommandContext;
-import dev.spoocy.utils.common.scheduler.task.Task;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,10 +14,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
-import static dev.spoocy.utils.common.scheduler.Scheduler.runAsync;
-import static dev.spoocy.utils.common.scheduler.Scheduler.runSync;
-import static net.dv8tion.jda.api.interactions.commands.build.CommandData.MAX_NAME_LENGTH;
 import static net.dv8tion.jda.api.interactions.commands.build.CommandData.MAX_DESCRIPTION_LENGTH;
+import static net.dv8tion.jda.api.interactions.commands.build.CommandData.MAX_NAME_LENGTH;
 
 /**
  * @author Spoocy99 | GitHub: Spoocy99
@@ -125,13 +122,8 @@ public class CommandNodeData implements CommandNode {
     }
 
     @Override
-    public Task<Void> execute(@NotNull CommandContext context) {
-        return runSync(() -> this.executor.accept(context));
-    }
-
-    @Override
-    public Task<Void> executeAsync(@NotNull CommandContext context) {
-        return runAsync(() -> this.executor.accept(context));
+    public void execute(@NotNull CommandContext context) {
+        this.executor.accept(context);
     }
 
     public @NotNull List<AbstractArgument> getArgumentData() {

@@ -16,8 +16,8 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import static net.dv8tion.jda.api.interactions.commands.build.CommandData.MAX_NAME_LENGTH;
 import static net.dv8tion.jda.api.interactions.commands.build.CommandData.MAX_DESCRIPTION_LENGTH;
+import static net.dv8tion.jda.api.interactions.commands.build.CommandData.MAX_NAME_LENGTH;
 
 /**
  * @author Spoocy99 | GitHub: Spoocy99
@@ -33,7 +33,7 @@ public abstract class AbstractCommandTree<Impl extends AbstractCommandTree<Impl>
     protected boolean acknowledge = true;
     protected boolean ephemeral = false;
     protected List<AbstractArgument> arguments = new ArrayList<>();
-    protected CooldownScope cooldown =CooldownScope.NONE;
+    protected CooldownScope cooldown = CooldownScope.NONE;
     protected Duration cooldownDuration = Duration.ZERO;
     protected Consumer<CommandContext> executor;
 
